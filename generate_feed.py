@@ -6,6 +6,7 @@ from datetime import datetime
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
 
+# Scrape Space Coast launches with images
 def scrape_launches():
     resp = requests.get("https://www.visitspacecoast.com/launches/")
     resp.raise_for_status()
@@ -14,6 +15,7 @@ def scrape_launches():
     seen = set()
     launches = []
     for block in soup.select("div.card__content"):
+        # parse date/time
         h6s = block.select("h6")
         if len(h6s) < 2:
             continue
@@ -28,7 +30,8 @@ def scrape_launches():
         ps          = block.select("p")
         description = ps[1].get_text(strip=True) if len(ps) > 1 else ""
 
-        img_tag = block.select_one("img")
+        # grab the launch image
+        img_tag = block.select_one("figure.card__image img") or block.select_one("img")
         img_url = img_tag["src"] if img_tag and img_tag.has_attr("src") else None
 
         key = (mission, dt.isoformat())
@@ -43,9 +46,9 @@ def scrape_launches():
             "description": description,
             "image":       img_url
         })
-
     return launches
 
+# Scrape Space Coast events with images
 def scrape_events():
     resp = requests.get("https://www.visitspacecoast.com/events/")
     resp.raise_for_status()
@@ -72,11 +75,10 @@ def scrape_events():
         link_tag = title_tag.find_next("a", string=lambda s: s and "View Event" in s)
         url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
 
-        img_url = None
-        if link_tag:
-            next_img = link_tag.find_next("img")
-            if next_img and next_img.has_attr("src"):
-                img_url = next_img["src"]
+        # grab the event thumbnail
+        block = title_tag.find_parent("div.card__content")
+        img_tag = block.select_one("figure.card__image img, img.attachment-post-thumbnail") if block else None
+        img_url = img_tag["src"] if img_tag and img_tag.has_attr("src") else None
 
         events.append({
             "datetime": dt_iso,
@@ -84,9 +86,9 @@ def scrape_events():
             "url":      url,
             "image":    img_url
         })
-
     return events
 
+# Generate RSS with <enclosure> tags for images
 def create_rss(launches, events, filename="spacecoast_feed.xml"):
     rss     = ET.Element('rss', version='2.0')
     channel = ET.SubElement(rss, 'channel')
