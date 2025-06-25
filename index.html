@@ -2,86 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Space Coast Launches &amp; Events</title>
+  <title>Launches &amp; Events</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0; padding: 0;
-      background: #f5f5f5; color: #333;
-    }
+    body { font-family: sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333; }
     header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #004080;
-      color: white;
-      padding: 1rem;
-      gap: 1rem;
+      display: flex; align-items: center; justify-content: center;
+      background:#004080; color:white; padding:1rem; gap:1rem;
     }
-    header img {
-      width: 230px; height: 66px;
-      object-fit: contain;
-    }
-    main {
-      max-width: 960px;
-      margin: 1rem auto;
-      padding: 0 1rem;
-    }
-    section + section {
-      margin-top: 2rem;
-    }
+    header img { width:230px; height:66px; object-fit:contain; }
+    main { max-width:960px; margin:1rem auto; padding:0 1rem; }
+    section + section { margin-top:2rem; }
     h2 {
-      border-bottom: 2px solid #004080;
-      padding-bottom: .5rem;
-      margin-bottom: 1rem;
+      border-bottom:2px solid #004080; padding-bottom:.5rem;
+      margin-bottom:1rem;
     }
     .banner {
-      width: 100%;
-      margin-bottom: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      width:100%; margin-bottom:1.5rem; border-radius:8px;
+      box-shadow:0 2px 6px rgba(0,0,0,0.1);
     }
     .cards {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
+      display:flex; flex-wrap:wrap; gap:1rem;
     }
     .card {
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      flex: 1 1 calc(50% - 1rem);
-      box-sizing: border-box;
-      overflow: hidden;
+      background:white; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1);
+      flex:1 1 calc(50% - 1rem); box-sizing:border-box; overflow:hidden;
     }
     .card img.card-img {
-      width: 100%;
-      height: auto;
-      display: block;
+      width:100%; height:auto; display:block;
     }
-    .card-content {
-      padding: 1rem;
-    }
-    .card h3 {
-      margin-top: 0; margin-bottom: .5rem;
-      font-size: 1.1rem;
-    }
-    .card a {
-      color: #004080; text-decoration: none;
-    }
-    .card a:hover {
-      text-decoration: underline;
-    }
-    .date {
-      font-size: .9rem; color: #666;
-      margin-bottom: .75rem;
-    }
-    .desc {
-      font-size: .95rem;
-    }
-    @media (max-width: 600px) {
-      .card { flex: 1 1 100%; }
-    }
+    .card-content { padding:1rem; }
+    .card h3 { margin-top:0; margin-bottom:.5rem; font-size:1.1rem; }
+    .card a { color:#004080; text-decoration:none; }
+    .card a:hover { text-decoration:underline; }
+    .date { font-size:.9rem; color:#666; margin-bottom:.75rem; }
+    .desc { font-size:.95rem; }
+    @media(max-width:600px) { .card { flex:1 1 100%; } }
   </style>
 </head>
 <body>
@@ -90,13 +45,12 @@
       src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
       alt="Visit Space Coast Logo"
     />
-    <h1>Space Coast Launches &amp; Events</h1>
+    <h1>Launches &amp; Events</h1>
   </header>
   <main>
 
     <section>
       <h2>Upcoming Launches</h2>
-      <!-- your banner below the heading -->
       <img
         class="banner"
         src="https://www.visitspacecoast.com/wp-content/uploads/2025/06/CRS21-wide-scaled.jpg"
@@ -113,42 +67,46 @@
 
   <script>
     async function loadFeed() {
-      const resp = await fetch('spacecoast_feed.xml');
-      const text = await resp.text();
-      const xml  = new DOMParser().parseFromString(text, 'application/xml');
+      const resp  = await fetch('spacecoast_feed.xml');
+      const text  = await resp.text();
+      const xml   = new DOMParser().parseFromString(text, 'application/xml');
       const items = Array.from(xml.querySelectorAll('item'));
 
-      const launchContainer = document.getElementById('launches');
-      const eventContainer  = document.getElementById('events');
+      const launchesEl = document.getElementById('launches');
+      const eventsEl   = document.getElementById('events');
 
       items.forEach(item => {
         const fullTitle = item.querySelector('title').textContent;
         const link      = item.querySelector('link').textContent;
-        const desc      = item.querySelector('description')?.textContent || '';
+        const desc      = item.querySelector('description')?.textContent  || '';
         const date      = item.querySelector('pubDate').textContent;
-        const enclosure = item.querySelector('enclosure');
-        const imgUrl    = enclosure ? enclosure.getAttribute('url') : null;
+        const enc       = item.querySelector('enclosure');
+        const imgUrl    = enc ? enc.getAttribute('url') : null;
 
         const card = document.createElement('div');
         card.className = 'card';
 
-        let inner = '';
+        let html = '';
         if (imgUrl) {
-          inner += `<img class="card-img" src="${imgUrl}" alt="">`;
+          html += `<img class="card-img" src="${imgUrl}" alt="">`;
         }
-        inner += `
+        html += `
           <div class="card-content">
-            <h3><a href="${link}" target="_blank">${fullTitle.replace(/^(Launch|Event):\s*/,'')}</a></h3>
+            <h3>
+              <a href="${link}" target="_blank">
+                ${fullTitle.replace(/^(Launch|Event):\s*/, '')}
+              </a>
+            </h3>
             <div class="date">${new Date(date).toLocaleString()}</div>
             <div class="desc">${desc}</div>
           </div>
         `;
-        card.innerHTML = inner;
+        card.innerHTML = html;
 
         if (fullTitle.startsWith('Launch:')) {
-          launchContainer.appendChild(card);
+          launchesEl.appendChild(card);
         } else {
-          eventContainer.appendChild(card);
+          eventsEl.appendChild(card);
         }
       });
     }
