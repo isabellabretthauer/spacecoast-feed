@@ -4,7 +4,7 @@
     <title>Visit Space Coast Launches &amp; Events</title>
     <link>https://www.visitspacecoast.com/</link>
     <description>Automated feed of Space Coast launches and events</description>
-    <lastBuildDate>Wed, 25 Jun 2025 13:07:15 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 25 Jun 2025 14:43:09 GMT</lastBuildDate>
     <item>
       <title>Launch: Falcon 9 Block 5 | Starlink Group 10-16</title>
       <link>https://www.visitspacecoast.com/launches/</link>
@@ -27,20 +27,6 @@
       <guid>launch-Falcon 9 Block 5 | Starlink Group 10-34-2025-06-28T00:26:00</guid>
     </item>
     <item>
-      <title>Launch: Falcon 9 Block 5 | Project Kuiper (Falcon 9 #1)</title>
-      <link>https://www.visitspacecoast.com/launches/</link>
-      <description>TBD: First of a three launches contract for Amazon’s Kuiper low Earth orbit satellite internet constellation.</description>
-      <pubDate>Sun, 29 Jun 2025 20:00:00 GMT</pubDate>
-      <guid>launch-Falcon 9 Block 5 | Project Kuiper (Falcon 9 #1)-2025-06-29T20:00:00</guid>
-    </item>
-    <item>
-      <title>Launch: New Glenn | EscaPADE</title>
-      <link>https://www.visitspacecoast.com/launches/</link>
-      <description>TBD: Maiden flight of Blue Origin’s New Glenn launch vehicle carrying the Escape and Plasma Acceleration and Dynamics Explorers (EscaPADE), a dual-spacecraft mission to study ion and sputtered escape from Mars. The spacecrafts’ scientific goals are to understand the processes controlling the structure of Mars’ hybrid magnetosphere and how it guides…</description>
-      <pubDate>Sun, 29 Jun 2025 20:00:00 GMT</pubDate>
-      <guid>launch-New Glenn | EscaPADE-2025-06-29T20:00:00</guid>
-    </item>
-    <item>
       <title>Launch: Atlas V 551 | ViaSat-3 EMEA</title>
       <link>https://www.visitspacecoast.com/launches/</link>
       <description>TBD: The ViaSat-3 is a series of three Ka-band satellites is expected to provide vastly superior capabilities in terms of service speed and flexibility for a satellite platform. Each ViaSat-3 class satellite is expected to deliver more than 1-Terabit per second of network capacity, and to leverage high levels of flexibility…</description>
@@ -48,22 +34,42 @@
       <guid>launch-Atlas V 551 | ViaSat-3 EMEA-2025-06-29T20:00:00</guid>
     </item>
     <item>
+      <title>Launch: Falcon 9 Block 5 | Bandwagon 4 (Dedicated Mid-Inclination Rideshare)</title>
+      <link>https://www.visitspacecoast.com/launches/</link>
+      <description>TBD: Dedicated rideshare flight to a mid-inclination orbit with dozens of small microsatellites and nanosatellites for commercial and government customers.</description>
+      <pubDate>Sun, 29 Jun 2025 20:00:00 GMT</pubDate>
+      <guid>launch-Falcon 9 Block 5 | Bandwagon 4 (Dedicated Mid-Inclination Rideshare)-2025-06-29T20:00:00</guid>
+    </item>
+    <item>
+      <title>Launch: Falcon 9 Block 5 | O3b mPower 9-11</title>
+      <link>https://www.visitspacecoast.com/launches/</link>
+      <description>TBD: Last three of a constellation of eleven high-throughput communications satellites in Medium Earth Orbit (MEO) built by Boeing and operated by SES.</description>
+      <pubDate>Sun, 29 Jun 2025 20:00:00 GMT</pubDate>
+      <guid>launch-Falcon 9 Block 5 | O3b mPower 9-11-2025-06-29T20:00:00</guid>
+    </item>
+    <item>
       <title>Event: July 4th Symphony Under the Stars</title>
       <link>https://www.visitspacecoast.com/event/july-4th-symphony-under-the-stars/</link>
+      <description>:</description>
       <pubDate>Fri, 04 Jul 2025 20:00:00 GMT</pubDate>
       <guid>event-July 4th Symphony Under the Stars-2025-07-04T20:00:00</guid>
+      <enclosure url="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20725%20480'%3E%3C/svg%3E" type="image/jpeg"/>
     </item>
     <item>
       <title>Event: Cocoa Beach Centennial Celebration</title>
       <link>https://www.visitspacecoast.com/event/cocoa-beach-centennial-celebration-2/</link>
+      <description>:</description>
       <pubDate>Sat, 05 Jul 2025 08:00:00 GMT</pubDate>
       <guid>event-Cocoa Beach Centennial Celebration-2025-07-05T08:00:00</guid>
+      <enclosure url="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20725%20480'%3E%3C/svg%3E" type="image/jpeg"/>
     </item>
     <item>
       <title>Event: Cocoa Beach Air Show</title>
       <link>https://www.visitspacecoast.com/event/cocoa-beach-air-show/</link>
+      <description>:</description>
       <pubDate>Sat, 12 Jul 2025 09:00:00 GMT</pubDate>
       <guid>event-Cocoa Beach Air Show-2025-07-12T09:00:00</guid>
+      <enclosure url="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20725%20480'%3E%3C/svg%3E" type="image/jpeg"/>
     </item>
   </channel>
 </rss>
