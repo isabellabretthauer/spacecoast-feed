@@ -4,20 +4,123 @@
   <meta charset="UTF-8"/>
   <title>Space Coast Launches &amp; Events</title>
   <style>
-    /* Make the embedded feed fill the screen */
-    html, body, object { margin:0; padding:0; width:100%; height:100%; }
+    body {
+      font-family: sans-serif;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #333;
+    }
+    header {
+      background: #004080;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    main {
+      max-width: 960px;
+      margin: 1rem auto;
+      padding: 0 1rem;
+    }
+    section + section {
+      margin-top: 2rem;
+    }
+    h2 {
+      border-bottom: 2px solid #004080;
+      padding-bottom: .5rem;
+      margin-bottom: 1rem;
+    }
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      flex: 1 1 calc(50% - 1rem);
+      padding: 1rem;
+      box-sizing: border-box;
+    }
+    .card h3 {
+      margin-top: 0;
+      margin-bottom: .5rem;
+      font-size: 1.1rem;
+    }
+    .card a {
+      color: #004080;
+      text-decoration: none;
+    }
+    .card a:hover {
+      text-decoration: underline;
+    }
+    .card .date {
+      font-size: .9rem;
+      color: #666;
+      margin-bottom: .5rem;
+    }
+    .card .desc {
+      font-size: .95rem;
+    }
+    @media (max-width: 600px) {
+      .card { flex: 1 1 100%; }
+    }
   </style>
 </head>
 <body>
-  <!-- this <object> tag will pull in your RSS -->
-  <object 
-    data="spacecoast_feed.xml" 
-    type="application/rss+xml"
-    fallback="">
-    <p>
-      Your browser (or player) doesn’t directly render RSS/XML.  
-      <a href="spacecoast_feed.xml">Download the raw feed here.</a>
-    </p>
-  </object>
+  <header>
+    <h1>Space Coast Launches &amp; Events</h1>
+  </header>
+  <main>
+    <section>
+      <h2>Upcoming Launches</h2>
+      <div id="launches" class="cards"></div>
+    </section>
+    <section>
+      <h2>Upcoming Events</h2>
+      <div id="events" class="cards"></div>
+    </section>
+  </main>
+
+  <script>
+    async function loadFeed() {
+      try {
+        const resp = await fetch('spacecoast_feed.xml');
+        const text = await resp.text();
+        const xml = new DOMParser().parseFromString(text, 'application/xml');
+        const items = Array.from(xml.querySelectorAll('item'));
+
+        const launchContainer = document.getElementById('launches');
+        const eventContainer  = document.getElementById('events');
+
+        items.forEach(item => {
+          const title = item.querySelector('title').textContent;
+          const link  = item.querySelector('link').textContent;
+          const desc  = item.querySelector('description')?.textContent || '';
+          const date  = item.querySelector('pubDate').textContent;
+
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+            <h3><a href="${link}" target="_blank">${title.replace(/^(Launch|Event):\s*/,'')}</a></h3>
+            <div class="date">${new Date(date).toLocaleString()}</div>
+            <div class="desc">${desc}</div>
+          `;
+
+          if (title.startsWith('Launch:')) {
+            launchContainer.appendChild(card);
+          } else {
+            eventContainer.appendChild(card);
+          }
+        });
+      } catch (err) {
+        console.error('Failed to load feed:', err);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadFeed);
+  </script>
 </body>
 </html>
