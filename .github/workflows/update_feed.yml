@@ -6,13 +6,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  update-feed:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          persist-credentials: true  # allows git push with GITHUB_TOKEN
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -20,24 +21,16 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: |
-          pip install requests beautifulsoup4
+        run: pip install requests beautifulsoup4
 
       - name: Generate RSS feed
         run: python generate_feed.py
 
-      - name: Commit and push changes
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Commit & push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [[ `git status --porcelain` ]]; then
-            # update origin to use the GITHUB_TOKEN for authentication
-            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
-            git add spacecoast_feed.xml
-            git commit -m "Automated feed update: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-            git push origin HEAD:main
-          else
-            echo "No changes to commit"
-          fi
+          git add spacecoast_feed.xml
+          # commit only if there are changes
+          git diff --cached --quiet || git commit -m "Automated feed update: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          git push
