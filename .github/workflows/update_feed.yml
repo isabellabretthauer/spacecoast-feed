@@ -3,12 +3,16 @@ name: Update Space Coast Feed
 on:
   schedule:
     - cron: '0 5 * * *'   # every day at 05:00 UTC (~1 AM EDT)
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -28,7 +32,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [[ `git status --porcelain` ]]; then
             git add spacecoast_feed.xml
-            git commit -m "Automated feed update"
+            git commit -m "Automated feed update: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
             git push
           else
             echo "No changes to commit"
