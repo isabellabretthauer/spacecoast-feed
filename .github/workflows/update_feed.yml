@@ -2,7 +2,7 @@ name: Update Space Coast Feed
 
 on:
   schedule:
-    - cron: '0 */6 * * *'    # every 6 hours
+    - cron: '0 */6 * * *'  # every 6 hours
   workflow_dispatch:
 
 jobs:
@@ -13,8 +13,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0            # full history, needed to push rebased commits
-          persist-credentials: true # use the GITHUB_TOKEN for pushes
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -27,7 +27,7 @@ jobs:
       - name: Generate RSS feed
         run: python generate_feed.py
 
-      - name: Commit updated feed
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -36,3 +36,4 @@ jobs:
 
       - name: Push changes
         run: git push origin main
+
