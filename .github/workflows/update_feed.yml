@@ -42,4 +42,5 @@ jobs:
 
       - name: Push changes
         if: env.changed == 'true'
-        run: git push origin main
+        run: |
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/isabellabretthauer/spacecoast-feed.git main
