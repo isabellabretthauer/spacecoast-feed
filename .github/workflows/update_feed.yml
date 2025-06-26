@@ -1,8 +1,14 @@
+# GitHub Actions workflow to regenerate and push RSS feed every 6 hours
+
 name: Update Space Coast Feed
+
+# Grant write permission so the GITHUB_TOKEN can push
+permissions:
+  contents: write
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
+    - cron: '0 */6 * * *'    # every 6 hours
   workflow_dispatch:
 
 jobs:
@@ -14,7 +20,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          persist-credentials: false  # Use the default GITHUB_TOKEN
+          persist-credentials: true  # use GITHUB_TOKEN for both fetch & push
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -27,19 +33,12 @@ jobs:
       - name: Generate RSS feed
         run: python generate_feed.py
 
-      - name: Check for changes
-        id: check_changes
+      - name: Commit changes if any
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add spacecoast_feed.xml
-          git diff --cached --quiet || echo "changed=true" >> $GITHUB_ENV
-
-      - name: Commit changes
-        if: env.changed == 'true'
-        run: |
-          git commit -m "Automated feed update: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          git diff --cached --quiet || git commit -m "Automated feed update: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
 
       - name: Push changes
-        if: env.changed == 'true'
         run: git push origin main
