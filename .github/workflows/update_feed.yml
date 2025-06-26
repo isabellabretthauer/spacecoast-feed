@@ -1,8 +1,12 @@
 name: Update Space Coast Feed
 
+# Grant write permission to contents so GITHUB_TOKEN can push
+permissions:
+  contents: write
+
 on:
   schedule:
-    - cron: '0 */6 * * *'  # every 6 hours
+    - cron: '0 */6 * * *'    # every 6 hours
   workflow_dispatch:
 
 jobs:
@@ -35,5 +39,8 @@ jobs:
           git diff --cached --quiet || git commit -m "Automated feed update: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
 
       - name: Push changes
-        run: git push origin main
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
 
