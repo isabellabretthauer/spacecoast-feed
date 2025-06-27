@@ -4,13 +4,20 @@
     <title>Visit Space Coast Launches &amp; Events</title>
     <link>https://www.visitspacecoast.com/</link>
     <description>Automated feed of Space Coast launches and events</description>
-    <lastBuildDate>Fri, 27 Jun 2025 12:24:57 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 27 Jun 2025 18:17:28 GMT</lastBuildDate>
     <item>
       <title>Launch: Falcon 9 Block 5 | Starlink Group 10-34</title>
       <link>https://www.visitspacecoast.com/launches/</link>
       <description>Go: A batch of satellites for the Starlink mega-constellation – SpaceX’s project for space-based Internet communication system.</description>
       <pubDate>Sat, 28 Jun 2025 00:26:00 GMT</pubDate>
       <guid>launch-Falcon 9 Block 5 | Starlink Group 10-34-2025-06-28T00:26:00</guid>
+    </item>
+    <item>
+      <title>Launch: New Glenn | EscaPADE</title>
+      <link>https://www.visitspacecoast.com/launches/</link>
+      <description>TBD: Maiden flight of Blue Origin’s New Glenn launch vehicle carrying the Escape and Plasma Acceleration and Dynamics Explorers (EscaPADE), a dual-spacecraft mission to study ion and sputtered escape from Mars. The spacecrafts’ scientific goals are to understand the processes controlling the structure of Mars’ hybrid magnetosphere and how it guides…</description>
+      <pubDate>Sun, 29 Jun 2025 20:00:00 GMT</pubDate>
+      <guid>launch-New Glenn | EscaPADE-2025-06-29T20:00:00</guid>
     </item>
     <item>
       <title>Launch: Atlas V 551 | ViaSat-3 EMEA</title>
@@ -39,13 +46,6 @@
       <description>TBD: First of a three launches contract for Amazon’s Kuiper low Earth orbit satellite internet constellation.</description>
       <pubDate>Sun, 29 Jun 2025 20:00:00 GMT</pubDate>
       <guid>launch-Falcon 9 Block 5 | Project Kuiper (Falcon 9 #1)-2025-06-29T20:00:00</guid>
-    </item>
-    <item>
-      <title>Launch: New Glenn | EscaPADE</title>
-      <link>https://www.visitspacecoast.com/launches/</link>
-      <description>TBD: Maiden flight of Blue Origin’s New Glenn launch vehicle carrying the Escape and Plasma Acceleration and Dynamics Explorers (EscaPADE), a dual-spacecraft mission to study ion and sputtered escape from Mars. The spacecrafts’ scientific goals are to understand the processes controlling the structure of Mars’ hybrid magnetosphere and how it guides…</description>
-      <pubDate>Sun, 29 Jun 2025 20:00:00 GMT</pubDate>
-      <guid>launch-New Glenn | EscaPADE-2025-06-29T20:00:00</guid>
     </item>
     <item>
       <title>Event: July 4th Symphony Under the Stars</title>
