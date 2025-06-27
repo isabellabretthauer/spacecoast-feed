@@ -43,6 +43,13 @@
     .date {
       font-size:.9rem; color:#666; margin-top:.5rem;
     }
+    /* QR code styling */
+    .qr {
+      display:block;
+      width:150px;
+      height:150px;
+      margin:0.5rem auto;
+    }
     @media(max-width:600px) { .card { flex:1 1 100% } }
   </style>
 </head>
@@ -98,6 +105,11 @@
           summary    = rawDesc.slice(idx + 1).trim();
         }
 
+        // build QR code URL via Google Chart API
+        const qrUrl = 'https://chart.googleapis.com/chart?cht=qr'
+                    + '&chs=150x150'
+                    + '&chl=' + encodeURIComponent(link);
+
         // build card
         const card = document.createElement('div');
         card.className = 'card';
@@ -108,10 +120,13 @@
         }
         inner += `
           <div class="card-content">
-            <h3><a href="${link}" target="_blank">
-              ${fullTitle.replace(/^(Launch|Event):\s*/, '')}
-            </a></h3>
+            <h3>
+              <a href="${link}" target="_blank">
+                ${fullTitle.replace(/^(Launch|Event):\s*/, '')}
+              </a>
+            </h3>
             ${statusText ? `<div class="status">Status: ${statusText}</div>` : ''}
+            <img class="qr" src="${qrUrl}" alt="QR code for ${fullTitle}">
             <div class="summary">${summary}</div>
             <div class="date">${new Date(date).toLocaleString()}</div>
           </div>
