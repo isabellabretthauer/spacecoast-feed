@@ -43,7 +43,6 @@
     .date {
       font-size:.9rem; color:#666; margin-top:.5rem;
     }
-    /* QR code styling */
     .qr {
       display:block;
       width:150px;
@@ -80,106 +79,105 @@
   </main>
 
   <script>
-  async function loadFeed() {
-    const resp = await fetch('spacecoast_feed.xml');
-    const text = await resp.text();
-    const xml  = new DOMParser().parseFromString(text, 'application/xml');
-    const items = Array.from(xml.querySelectorAll('item'));
+    async function loadFeed() {
+      const resp = await fetch('spacecoast_feed.xml');
+      const text = await resp.text();
+      const xml  = new DOMParser().parseFromString(text, 'application/xml');
+      const items = Array.from(xml.querySelectorAll('item'));
 
-    const launchesEl = document.getElementById('launches');
-    const eventsEl   = document.getElementById('events');
+      const launchesEl = document.getElementById('launches');
+      const eventsEl   = document.getElementById('events');
 
-    items.forEach(item => {
-      const fullTitle = item.querySelector('title').textContent;
-      const link      = item.querySelector('link').textContent;
-      const rawDesc   = item.querySelector('description')?.textContent || '';
-      const dateText  = item.querySelector('pubDate').textContent;
-      const enc       = item.querySelector('enclosure');
-      const imgUrl    = enc?.getAttribute('url') || null;
+      items.forEach(item => {
+        const fullTitle = item.querySelector('title').textContent;
+        const link      = item.querySelector('link').textContent;
+        const rawDesc   = item.querySelector('description')?.textContent || '';
+        const dateText  = item.querySelector('pubDate').textContent;
+        const enc       = item.querySelector('enclosure');
+        const imgUrl    = enc?.getAttribute('url') || null;
 
-      // split status vs summary
-      let statusText = '', summary = rawDesc;
-      const idx = rawDesc.indexOf(':');
-      if (idx !== -1) {
-        statusText = rawDesc.slice(0, idx).trim();
-        summary    = rawDesc.slice(idx + 1).trim();
-      }
+        // split status vs summary
+        let statusText = '', summary = rawDesc;
+        const idx = rawDesc.indexOf(':');
+        if (idx !== -1) {
+          statusText = rawDesc.slice(0, idx).trim();
+          summary    = rawDesc.slice(idx + 1).trim();
+        }
 
-      // build QR URL
-      const qrUrl = [
-        'https://chart.googleapis.com/chart?cht=qr',
-        'chs=150x150',
-        'chl=' + encodeURIComponent(link)
-      ].join('&');
+        // build QR URL
+        const qrUrl = [
+          'https://chart.googleapis.com/chart?cht=qr',
+          'chs=150x150',
+          'chl=' + encodeURIComponent(link)
+        ].join('&');
 
-      // create card element
-      const card = document.createElement('div');
-      card.className = 'card';
+        // create card element
+        const card = document.createElement('div');
+        card.className = 'card';
 
-      // thumbnail
-      if (imgUrl) {
-        const thumb = document.createElement('img');
-        thumb.className = 'thumb';
-        thumb.src       = imgUrl;
-        thumb.alt       = fullTitle;
-        card.appendChild(thumb);
-      }
+        // thumbnail
+        if (imgUrl) {
+          const thumb = document.createElement('img');
+          thumb.className = 'thumb';
+          thumb.src       = imgUrl;
+          thumb.alt       = fullTitle;
+          card.appendChild(thumb);
+        }
 
-      // content container
-      const content = document.createElement('div');
-      content.className = 'card-content';
+        // content container
+        const content = document.createElement('div');
+        content.className = 'card-content';
 
-      // title link
-      const h3 = document.createElement('h3');
-      const a  = document.createElement('a');
-      a.href        = link;
-      a.target      = '_blank';
-      a.textContent = fullTitle.replace(/^(Launch|Event):\s*/, '');
-      h3.appendChild(a);
-      content.appendChild(h3);
+        // title link
+        const h3 = document.createElement('h3');
+        const a  = document.createElement('a');
+        a.href        = link;
+        a.target      = '_blank';
+        a.textContent = fullTitle.replace(/^(Launch|Event):\s*/, '');
+        h3.appendChild(a);
+        content.appendChild(h3);
 
-      // status
-      if (statusText) {
-        const st = document.createElement('div');
-        st.className   = 'status';
-        st.textContent = 'Status: ' + statusText;
-        content.appendChild(st);
-      }
+        // status
+        if (statusText) {
+          const st = document.createElement('div');
+          st.className   = 'status';
+          st.textContent = 'Status: ' + statusText;
+          content.appendChild(st);
+        }
 
-      // QR code
-      const qr = document.createElement('img');
-      qr.className = 'qr';
-      qr.src       = qrUrl;
-      qr.alt       = 'Scan to open ' + fullTitle;
-      content.appendChild(qr);
+        // QR code
+        const qr = document.createElement('img');
+        qr.className = 'qr';
+        qr.src       = qrUrl;
+        qr.alt       = 'Scan to open ' + fullTitle;
+        content.appendChild(qr);
 
-      // summary
-      if (summary) {
-        const sum = document.createElement('div');
-        sum.className   = 'summary';
-        sum.textContent = summary;
-        content.appendChild(sum);
-      }
+        // summary
+        if (summary) {
+          const sum = document.createElement('div');
+          sum.className   = 'summary';
+          sum.textContent = summary;
+          content.appendChild(sum);
+        }
 
-      // date
-      const dt = document.createElement('div');
-      dt.className   = 'date';
-      dt.textContent = new Date(dateText).toLocaleString();
-      content.appendChild(dt);
+        // date
+        const dt = document.createElement('div');
+        dt.className   = 'date';
+        dt.textContent = new Date(dateText).toLocaleString();
+        content.appendChild(dt);
 
-      card.appendChild(content);
+        card.appendChild(content);
 
-      // append to correct section
-      if (fullTitle.startsWith('Launch:')) {
-        launchesEl.appendChild(card);
-      } else {
-        eventsEl.appendChild(card);
-      }
-    });
-  }
+        // append to correct section
+        if (fullTitle.startsWith('Launch:')) {
+          launchesEl.appendChild(card);
+        } else {
+          eventsEl.appendChild(card);
+        }
+      });
+    }
 
-  document.addEventListener('DOMContentLoaded', loadFeed);
-</script>
-
+    document.addEventListener('DOMContentLoaded', loadFeed);
+  </script>
 </body>
 </html>
