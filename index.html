@@ -78,7 +78,8 @@
       <div id="events" class="cards"></div>
     </section>
   </main>
-<script>
+
+  <script>
   async function loadFeed() {
     const resp = await fetch('spacecoast_feed.xml');
     const text = await resp.text();
@@ -92,11 +93,11 @@
       const fullTitle = item.querySelector('title').textContent;
       const link      = item.querySelector('link').textContent;
       const rawDesc   = item.querySelector('description')?.textContent || '';
-      const date      = item.querySelector('pubDate').textContent;
+      const dateText  = item.querySelector('pubDate').textContent;
       const enc       = item.querySelector('enclosure');
       const imgUrl    = enc?.getAttribute('url') || null;
 
-      // split out status vs. summary
+      // split status vs summary
       let statusText = '', summary = rawDesc;
       const idx = rawDesc.indexOf(':');
       if (idx !== -1) {
@@ -104,35 +105,71 @@
         summary    = rawDesc.slice(idx + 1).trim();
       }
 
-      // build QR code URL via Google Chart API
-      const qrUrl = 'https://chart.googleapis.com/chart?cht=qr'
-                  + '&chs=150x150'
-                  + '&chl=' + encodeURIComponent(link);
+      // build QR URL
+      const qrUrl = [
+        'https://chart.googleapis.com/chart?cht=qr',
+        'chs=150x150',
+        'chl=' + encodeURIComponent(link)
+      ].join('&');
 
-      // build card
+      // create card element
       const card = document.createElement('div');
       card.className = 'card';
 
-      let inner = '';
+      // thumbnail
       if (imgUrl) {
-        inner += `<img class="thumb" src="${imgUrl}" alt="">`;
+        const thumb = document.createElement('img');
+        thumb.className = 'thumb';
+        thumb.src       = imgUrl;
+        thumb.alt       = fullTitle;
+        card.appendChild(thumb);
       }
 
-      inner += `<div class="card-content">
-          <h3>
-            <a href="${link}" target="_blank">
-              ${fullTitle.replace(/^(Launch|Event):\s*/, '')}
-            </a>
-          </h3>
-          ${statusText ? `<div class="status">Status: ${statusText}</div>` : ''}
-          <!-- HERE: insert the QR code image -->
-          <img class="qr" src="${qrUrl}" alt="Scan to open ${fullTitle}">
-          <div class="summary">${summary}</div>
-          <div class="date">${new Date(date).toLocaleString()}</div>
-        </div>`;
+      // content container
+      const content = document.createElement('div');
+      content.className = 'card-content';
 
-      card.innerHTML = inner;
+      // title link
+      const h3 = document.createElement('h3');
+      const a  = document.createElement('a');
+      a.href        = link;
+      a.target      = '_blank';
+      a.textContent = fullTitle.replace(/^(Launch|Event):\s*/, '');
+      h3.appendChild(a);
+      content.appendChild(h3);
 
+      // status
+      if (statusText) {
+        const st = document.createElement('div');
+        st.className   = 'status';
+        st.textContent = 'Status: ' + statusText;
+        content.appendChild(st);
+      }
+
+      // QR code
+      const qr = document.createElement('img');
+      qr.className = 'qr';
+      qr.src       = qrUrl;
+      qr.alt       = 'Scan to open ' + fullTitle;
+      content.appendChild(qr);
+
+      // summary
+      if (summary) {
+        const sum = document.createElement('div');
+        sum.className   = 'summary';
+        sum.textContent = summary;
+        content.appendChild(sum);
+      }
+
+      // date
+      const dt = document.createElement('div');
+      dt.className   = 'date';
+      dt.textContent = new Date(dateText).toLocaleString();
+      content.appendChild(dt);
+
+      card.appendChild(content);
+
+      // append to correct section
       if (fullTitle.startsWith('Launch:')) {
         launchesEl.appendChild(card);
       } else {
@@ -143,5 +180,6 @@
 
   document.addEventListener('DOMContentLoaded', loadFeed);
 </script>
+
 </body>
 </html>
