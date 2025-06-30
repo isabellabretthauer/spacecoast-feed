@@ -39,7 +39,7 @@
     .status {
       font-weight:bold; margin-bottom:.5rem; color:#555;
     }
-    .summary { font-size:.95rem; color:#333 }
+    .summary { font-size:.95rem; color:#333; margin-bottom:.5rem; }
     .date {
       font-size:.9rem; color:#666; margin-top:.5rem;
     }
@@ -88,6 +88,7 @@
       const launchesEl = document.getElementById('launches');
       const eventsEl   = document.getElementById('events');
 
+      // Build cards
       items.forEach(item => {
         const fullTitle = item.querySelector('title').textContent;
         const link      = item.querySelector('link').textContent;
@@ -104,16 +105,16 @@
           summary    = rawDesc.slice(idx + 1).trim();
         }
 
-      // build QR URL via QRServer (more reliable than Google Charts)
-      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/'
-                  + '?size=150x150'
-                  + '&data=' + encodeURIComponent(link);
+        // QR code URL (only used for events)
+        const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/'
+                    + '?size=150x150'
+                    + '&data=' + encodeURIComponent(link);
 
-        // create card element
+        // create card
         const card = document.createElement('div');
         card.className = 'card';
 
-        // thumbnail
+        // thumbnail (if any)
         if (imgUrl) {
           const thumb = document.createElement('img');
           thumb.className = 'thumb';
@@ -126,7 +127,7 @@
         const content = document.createElement('div');
         content.className = 'card-content';
 
-        // title link
+        // title
         const h3 = document.createElement('h3');
         const a  = document.createElement('a');
         a.href        = link;
@@ -143,14 +144,16 @@
           content.appendChild(st);
         }
 
-        // QR code
-        const qr = document.createElement('img');
-        qr.className = 'qr';
-        qr.src       = qrUrl;
-        qr.alt       = 'Scan to open ' + fullTitle;
-        content.appendChild(qr);
+        // For events: inject QR
+        if (fullTitle.startsWith('Event:')) {
+          const qr = document.createElement('img');
+          qr.className = 'qr';
+          qr.src       = qrUrl;
+          qr.alt       = 'Scan to open ' + fullTitle;
+          content.appendChild(qr);
+        }
 
-        // summary
+        // summary (for events, mostly)
         if (summary) {
           const sum = document.createElement('div');
           sum.className   = 'summary';
@@ -166,17 +169,29 @@
 
         card.appendChild(content);
 
-        // append to correct section
+        // append to correct column
         if (fullTitle.startsWith('Launch:')) {
           launchesEl.appendChild(card);
         } else {
           eventsEl.appendChild(card);
         }
       });
+
+      // Finally—one single QR for all launches:
+      const scanCard = document.createElement('div');
+      scanCard.className = 'card';
+      scanCard.innerHTML = `
+        <div class="card-content" style="text-align:center;">
+          <p>For more launch details, scan below:</p>
+          <img class="qr"
+               src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}"
+               alt="Scan for more launches">
+        </div>
+      `;
+      launchesEl.appendChild(scanCard);
     }
 
     document.addEventListener('DOMContentLoaded', loadFeed);
   </script>
 </body>
 </html>
-
