@@ -104,12 +104,10 @@
           summary    = rawDesc.slice(idx + 1).trim();
         }
 
-        // build QR URL
-        const qrUrl = [
-          'https://chart.googleapis.com/chart?cht=qr',
-          'chs=150x150',
-          'chl=' + encodeURIComponent(link)
-        ].join('&');
+      // build QR URL via QRServer (more reliable than Google Charts)
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/'
+                  + '?size=150x150'
+                  + '&data=' + encodeURIComponent(link);
 
         // create card element
         const card = document.createElement('div');
