@@ -60,6 +60,7 @@ def scrape_events():
 
     events = []
     for block in soup.select("div.card__content"):
+        # Title
         title_tag = block.find("h4")
         if not title_tag:
             continue
@@ -82,13 +83,16 @@ def scrape_events():
         link_tag = title_tag.find_next("a", string=lambda s: s and "View Event" in s)
         url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
 
-        # Event description (first <p> after title)
+        # Description (first <p> after title)
         desc_el = block.find("p")
         description = desc_el.get_text(strip=True) if desc_el else ""
 
-        # Event image from <figure class="card__image">
+        # **Event Image** — try <figure> first, else any <img> in block
         fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
-        img_tag = fig.find("img") if fig else None
+        if fig:
+            img_tag = fig.find("img")
+        else:
+            img_tag = block.find("img")
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
         events.append({
