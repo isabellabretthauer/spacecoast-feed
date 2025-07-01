@@ -75,6 +75,15 @@
     </section>
 
     <section>
+      <h2>Launch Viewing Map</h2>
+      <img
+        class="banner"
+        src="https://www.visitspacecoast.com/wp-content/uploads/2023/12/Launch-Viewing-Map.png"
+        alt="Launch Viewing Map"
+      />
+    </section>
+
+    <section>
       <h2>Upcoming Events</h2>
       <div id="events" class="cards"></div>
     </section>
@@ -115,7 +124,7 @@
           summary    = rawDesc.slice(idx + 1).trim();
         }
 
-        // QR URL for events
+        // QR for events
         const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/'
                     + '?size=150x150'
                     + '&data=' + encodeURIComponent(link);
@@ -124,7 +133,7 @@
         const card = document.createElement('div');
         card.className = 'card';
 
-        // event/launch thumbnail
+        // thumbnail (now working!)
         if (imgUrl) {
           const thumb = document.createElement('img');
           thumb.className = 'thumb';
@@ -151,7 +160,6 @@
           content.appendChild(st);
         }
 
-        // Only events get their QR
         if (fullTitle.startsWith('Event:')) {
           const qr = document.createElement('img');
           qr.className = 'qr';
@@ -181,7 +189,7 @@
         }
       });
 
-      // one scan-for-more-launches QR at bottom of launches
+      // one scan-for-more-launches QR
       const scanCard = document.createElement('div');
       scanCard.className = 'card';
       scanCard.innerHTML = `
