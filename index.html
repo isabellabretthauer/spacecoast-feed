@@ -12,9 +12,7 @@
     }
     header img { width:230px; height:66px; object-fit:contain; }
     h1 { margin:0; font-size:1.5rem; }
-    /* App QR block */
-    #app-qr { text-align:center; margin:1rem 0; }
-    #app-qr img { width:150px; height:150px; }
+
     main { max-width:960px; margin:1rem auto; padding:0 1rem }
     section + section { margin-top:2rem }
     h2 {
@@ -65,15 +63,6 @@
     <h1>Launches &amp; Events</h1>
   </header>
 
-  <!-- App Download QR -->
-  <div id="app-qr">
-    <p>Download the official Space Coast Launches app:</p>
-    <img
-      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
-      alt="QR for Space Coast Launches app"
-    />
-  </div>
-
   <main>
     <section>
       <h2>Upcoming Launches</h2>
@@ -90,6 +79,15 @@
       <div id="events" class="cards"></div>
     </section>
   </main>
+
+  <!-- App Download QR moved to bottom -->
+  <div id="app-qr" style="text-align:center; margin:2rem 0;">
+    <p>Download the official Space Coast Launches app:</p>
+    <img
+      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
+      alt="QR for Space Coast Launches app"
+    />
+  </div>
 
   <script>
     async function loadFeed() {
@@ -109,7 +107,7 @@
         const enc       = item.querySelector('enclosure');
         const imgUrl    = enc?.getAttribute('url') || null;
 
-        // split status vs summary
+        // split status vs. summary
         let statusText = '', summary = rawDesc;
         const idx = rawDesc.indexOf(':');
         if (idx !== -1) {
@@ -117,7 +115,7 @@
           summary    = rawDesc.slice(idx + 1).trim();
         }
 
-        // QR for events only
+        // QR URL for events
         const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/'
                     + '?size=150x150'
                     + '&data=' + encodeURIComponent(link);
@@ -126,6 +124,7 @@
         const card = document.createElement('div');
         card.className = 'card';
 
+        // event/launch thumbnail
         if (imgUrl) {
           const thumb = document.createElement('img');
           thumb.className = 'thumb';
@@ -152,7 +151,7 @@
           content.appendChild(st);
         }
 
-        // QR for events
+        // Only events get their QR
         if (fullTitle.startsWith('Event:')) {
           const qr = document.createElement('img');
           qr.className = 'qr';
@@ -182,7 +181,7 @@
         }
       });
 
-      // one scan-for-more-launches QR at bottom
+      // one scan-for-more-launches QR at bottom of launches
       const scanCard = document.createElement('div');
       scanCard.className = 'card';
       scanCard.innerHTML = `
@@ -200,4 +199,3 @@
   </script>
 </body>
 </html>
-
