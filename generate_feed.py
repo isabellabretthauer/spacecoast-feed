@@ -14,7 +14,7 @@ def scrape_launches():
     seen = set()
     launches = []
     for block in soup.select("div.card__content"):
-        # Date/time
+        # date/time
         h6s = block.select("h6")
         if len(h6s) < 2:
             continue
@@ -25,17 +25,17 @@ def scrape_launches():
             continue
         iso = dt.isoformat()
 
-        # Mission, status, description
+        # mission / status / description
         mission = block.select_one("p strong").get_text(strip=True)
         status_line = block.select_one("span.card-launches__status").get_text(strip=True)
-        status = status_line.split(":", 1)[1].strip() if ":" in status_line else status_line
+        status = status_line.split(":",1)[1].strip() if ":" in status_line else status_line
         ps = block.select("p")
         description = ps[1].get_text(strip=True) if len(ps) > 1 else ""
 
-        # Launch image from <figure class="card__image">
+        # launch image
         fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
-        img_tag = fig.find("img") if fig else None
-        img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
+        img = fig.find("img") if fig else None
+        img_url = img.get("data-lazy-src") or img.get("src") if img else None
 
         key = (mission, iso)
         if key in seen:
@@ -59,40 +59,34 @@ def scrape_events():
     soup = BeautifulSoup(resp.text, "html.parser")
 
     events = []
-    for block in soup.select("div.card__content"):
-        # Title
-        title_tag = block.find("h4")
-        if not title_tag:
-            continue
+    for title_tag in soup.find_all("h4"):
         title = title_tag.get_text(strip=True)
 
-        # Date & time
+        # find date/time
         ul = title_tag.find_next_sibling("ul")
-        lis = ul.find_all("li") if ul else []
-        raw_date = lis[0].get_text(strip=True) if lis else ""
+        if not ul:
+            continue
+        lis = ul.find_all("li")
+        raw_date = lis[0].get_text(strip=True)
         first_date = raw_date.split("–")[0].split("-")[0].strip()
-        time_str = (lis[1].get_text(strip=True).replace("Time start:", "").strip()
-                    if len(lis) > 1 else "")
+        time_str = lis[1].get_text(strip=True).replace("Time start:", "").strip() if len(lis)>1 else ""
         try:
             dt = datetime.strptime(f"{first_date} {time_str}", "%B %d, %Y %I:%M %p")
             iso = dt.isoformat()
         except ValueError:
             iso = datetime.strptime(first_date, "%B %d, %Y").date().isoformat()
 
-        # Event URL
+        # event link
         link_tag = title_tag.find_next("a", string=lambda s: s and "View Event" in s)
         url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
 
-        # Description (first <p> after title)
-        desc_el = block.find("p")
-        description = desc_el.get_text(strip=True) if desc_el else ""
+        # description: second <p> in this card__content
+        card = title_tag.find_parent("div.card__content")
+        ps = card.select("p") if card else []
+        description = ps[1].get_text(strip=True) if len(ps)>1 else (ps[0].get_text(strip=True) if ps else "")
 
-        # **Event Image** — try <figure> first, else any <img> in block
-        fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
-        if fig:
-            img_tag = fig.find("img")
-        else:
-            img_tag = block.find("img")
+        # event image: first <img> in this card__content
+        img_tag = card.select_one("img") if card else None
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
         events.append({
