@@ -30,7 +30,7 @@ def scrape_launches():
         ps = block.select("p")
         description = ps[1].get_text(strip=True) if len(ps) > 1 else ""
 
-        # get launch image
+        # launch image
         fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
         img_tag = fig.find("img") if fig else None
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
@@ -76,16 +76,21 @@ def scrape_events():
         url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
 
         card = title_tag.find_parent("div.card__content")
+        # description
         ps = card.select("p") if card else []
         description = ps[1].get_text(strip=True) if len(ps)>1 else (ps[0].get_text(strip=True) if ps else "")
 
-        img_tag = card.select_one("img") if card else None
+        # event image from preceding <figure> or inside block
+        fig = card.find_previous_sibling("figure", class_="card__image") or card.select_one("figure.card__image")
+        if fig:
+            img_tag = fig.find("img")
+        else:
+            img_tag = card.select_one("img")
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
         events.append({
             "datetime":    iso,
             "title":       title,
-            "status":      "",
             "description": description,
             "url":         url,
             "image":       img_url,
@@ -104,9 +109,7 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
         it = ET.SubElement(channel, 'item')
         ET.SubElement(it, 'title').text       = f"{kind}: {item.get('mission', item.get('title'))}"
         ET.SubElement(it, 'link').text        = item.get('url') or ''
-        desc = f"Status: {item.get('status','')}"
-        if item.get('description'):
-            desc += "\n" + item.get('description')
+        desc = item.get('description','')
         ET.SubElement(it, 'description').text = desc
         ET.SubElement(it, 'pubDate').text     = datetime.fromisoformat(item['datetime']).strftime('%a, %d %b %Y %H:%M:%S GMT')
         guid_text = item.get('mission') or item.get('title')
@@ -114,20 +117,18 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
         if item.get('image'):
             ET.SubElement(it, 'enclosure', url=item['image'], type='image/jpeg')
 
-    for l in launches: add_item(l, "Launch")
-    for e in events:   add_item(e, "Event")
+    for l in launches:
+        add_item(l, "Launch")
+    for e in events:
+        add_item(e, "Event")
 
     xml_str = minidom.parseString(ET.tostring(rss)).toprettyxml(indent="  ")
     with open(filename, "w", encoding="utf-8") as f:
         f.write(xml_str)
     print(f"Generated {filename}")
-    print(f"DEBUG: scraped {len(events)} events")
-    for ev in events:
-        print("  -", ev["title"], ev["url"], ev["image"])
 
 if __name__ == "__main__":
     launches = scrape_launches()
     events   = scrape_events()
     create_rss(launches, events)
-
 

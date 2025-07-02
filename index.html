@@ -20,7 +20,6 @@
     .card h3{margin:0 0 .5rem;font-size:1.1rem}
     .card a{color:#004080;text-decoration:none}
     .card a:hover{text-decoration:underline}
-    .status{font-weight:bold;margin-bottom:.5rem;color:#555}
     .summary{font-size:.95rem;color:#333;margin-bottom:.5rem}
     .date{font-size:.9rem;color:#666;margin-top:.5rem}
     .qr{display:block;width:150px;height:150px;margin:.5rem auto}
@@ -58,78 +57,68 @@
 
   <script>
     async function loadFeed() {
-      const res = await fetch('spacecoast_feed.xml');
-      const xml = new DOMParser().parseFromString(await res.text(), 'application/xml');
-      const items = [...xml.querySelectorAll('item')];
+      const res  = await fetch('spacecoast_feed.xml');
+      const xml  = new DOMParser().parseFromString(await res.text(), 'application/xml');
+      const items= [...xml.querySelectorAll('item')];
       const launchesEl = document.getElementById('launches');
       const eventsEl   = document.getElementById('events');
 
       items.forEach(item => {
         const title    = item.querySelector('title').textContent;
         const link     = item.querySelector('link').textContent;
-        const rawDesc  = item.querySelector('description').textContent;
+        const summary  = item.querySelector('description').textContent;
         const dateText = item.querySelector('pubDate').textContent;
         const enc      = item.querySelector('enclosure');
         const imgUrl   = enc?.getAttribute('url') || null;
-
-        let status = '', summary = rawDesc;
-        const idx = rawDesc.indexOf(':');
-        if (idx !== -1) {
-          status  = rawDesc.slice(0, idx).trim();
-          summary = rawDesc.slice(idx+1).trim();
-        }
 
         const card = document.createElement('div');
         card.className = 'card';
         if (imgUrl) {
           const img = document.createElement('img');
           img.className = 'thumb';
-          img.src = imgUrl;
+          img.src       = imgUrl;
           card.appendChild(img);
         }
 
         const c = document.createElement('div');
         c.className = 'card-content';
+
         const h3 = document.createElement('h3');
         const a  = document.createElement('a');
-        a.href = link; a.target='_blank';
+        a.href = link; a.target = '_blank';
         a.textContent = title.replace(/^(Launch|Event):\s*/, '');
         h3.appendChild(a);
         c.appendChild(h3);
 
-        if (status) {
-          const st = document.createElement('div');
-          st.className   = 'status';
-          st.textContent = 'Status: ' + status;
-          c.appendChild(st);
-        }
-
-        if (title.startsWith('Event:')) {
-          const qr = document.createElement('img');
-          qr.className = 'qr';
-          qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='
-                  + encodeURIComponent(link);
-          c.appendChild(qr);
-        }
-
+        // summary
         if (summary) {
           const sum = document.createElement('div');
-          sum.className = 'summary';
+          sum.className   = 'summary';
           sum.textContent = summary;
           c.appendChild(sum);
         }
 
+        // date/time
         const d = document.createElement('div');
-        d.className = 'date';
+        d.className   = 'date';
         d.textContent = new Date(dateText).toLocaleString();
         c.appendChild(d);
+
+        // QR for events
+        if (title.startsWith('Event:')) {
+          const qr = document.createElement('img');
+          qr.className = 'qr';
+          qr.src       = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='
+                        + encodeURIComponent(link);
+          c.appendChild(qr);
+        }
 
         card.appendChild(c);
         if (title.startsWith('Launch:')) launchesEl.appendChild(card);
         else eventsEl.appendChild(card);
       });
 
-      // single “more launches” QR
+      // one “more launches” QR
       const scan = document.createElement('div');
       scan.className = 'card';
       scan.innerHTML = `
@@ -139,7 +128,7 @@
                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}"
                alt="Scan for more launches">
         </div>`;
-      document.getElementById('launches').appendChild(scan);
+      launchesEl.appendChild(scan);
     }
 
     document.addEventListener('DOMContentLoaded', loadFeed);
