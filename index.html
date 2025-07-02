@@ -49,7 +49,7 @@
       <div id="events" class="cards"></div>
     </section>
 
-    <div id="app-qr" style="text-align:center;margin:2rem 0">
+    <div style="text-align:center;margin:2rem 0">
       <p>Download the official Space Coast Launches app:</p>
       <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789" alt="App QR"/>
     </div>
@@ -57,8 +57,8 @@
 
   <script>
     async function loadFeed() {
-      const res  = await fetch('spacecoast_feed.xml');
-      const xml  = new DOMParser().parseFromString(await res.text(), 'application/xml');
+      const resp = await fetch('spacecoast_feed.xml');
+      const xml  = new DOMParser().parseFromString(await resp.text(), 'application/xml');
       const items= [...xml.querySelectorAll('item')];
       const launchesEl = document.getElementById('launches');
       const eventsEl   = document.getElementById('events');
@@ -73,6 +73,7 @@
 
         const card = document.createElement('div');
         card.className = 'card';
+
         if (imgUrl) {
           const img = document.createElement('img');
           img.className = 'thumb';
@@ -83,9 +84,11 @@
         const c = document.createElement('div');
         c.className = 'card-content';
 
+        // title link
         const h3 = document.createElement('h3');
         const a  = document.createElement('a');
-        a.href = link; a.target = '_blank';
+        a.href        = link;
+        a.target      = '_blank';
         a.textContent = title.replace(/^(Launch|Event):\s*/, '');
         h3.appendChild(a);
         c.appendChild(h3);
@@ -99,26 +102,27 @@
         }
 
         // date/time
-        const d = document.createElement('div');
-        d.className   = 'date';
-        d.textContent = new Date(dateText).toLocaleString();
-        c.appendChild(d);
+        const dt = document.createElement('div');
+        dt.className   = 'date';
+        dt.textContent = new Date(dateText).toLocaleString();
+        c.appendChild(dt);
 
-        // QR for events
-        if (title.startsWith('Event:')) {
+        // QR only on events
+        if (/^Event:/.test(title)) {
           const qr = document.createElement('img');
           qr.className = 'qr';
-          qr.src       = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='
-                        + encodeURIComponent(link);
+          qr.src       = 'https://api.qrserver.com/v1/create-qr-code/'
+                      + '?size=150x150&data='
+                      + encodeURIComponent(link);
           c.appendChild(qr);
         }
 
         card.appendChild(c);
-        if (title.startsWith('Launch:')) launchesEl.appendChild(card);
-        else eventsEl.appendChild(card);
+        if (/^Launch:/.test(title)) launchesEl.appendChild(card);
+        else                        eventsEl.appendChild(card);
       });
 
-      // one “more launches” QR
+      // single “more launches” QR at bottom
       const scan = document.createElement('div');
       scan.className = 'card';
       scan.innerHTML = `
@@ -135,4 +139,3 @@
   </script>
 </body>
 </html>
-
