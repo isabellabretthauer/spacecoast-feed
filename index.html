@@ -28,20 +28,23 @@
 </head>
 <body>
   <header>
-    <img src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png" alt="Logo"/>
+    <img
+      src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
+      alt="Visit Space Coast Logo"
+    />
     <h1>Launches &amp; Events</h1>
   </header>
 
   <main>
     <section>
       <h2>Upcoming Launches</h2>
-      <img class="banner" src="https://www.visitspacecoast.com/wp-content/uploads/2025/06/CRS21-wide-scaled.jpg" alt="CRS-21"/>
+      <img class="banner" src="https://www.visitspacecoast.com/wp-content/uploads/2025/06/CRS21-wide-scaled.jpg" alt="CRS-21 Banner"/>
       <div id="launches" class="cards"></div>
     </section>
 
     <section>
       <h2>Launch Viewing Map</h2>
-      <img class="banner" src="https://www.visitspacecoast.com/wp-content/uploads/2023/12/Launch-Viewing-Map.png" alt="Map"/>
+      <img class="banner" src="https://www.visitspacecoast.com/wp-content/uploads/2023/12/Launch-Viewing-Map.png" alt="Viewing Map"/>
     </section>
 
     <section>
@@ -49,9 +52,14 @@
       <div id="events" class="cards"></div>
     </section>
 
+<<<<<<< HEAD
     <div style="text-align:center;margin:2rem 0">
+=======
+    <div style="text-align:center;margin:2rem 0;">
+>>>>>>> 684007d (Fix event images + summary + date/time; remove event status)
       <p>Download the official Space Coast Launches app:</p>
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789" alt="App QR"/>
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
+           alt="App QR"/>
     </div>
   </main>
 
@@ -64,21 +72,21 @@
       const eventsEl   = document.getElementById('events');
 
       items.forEach(item => {
-        const title    = item.querySelector('title').textContent;
-        const link     = item.querySelector('link').textContent;
-        const summary  = item.querySelector('description').textContent;
-        const dateText = item.querySelector('pubDate').textContent;
-        const enc      = item.querySelector('enclosure');
-        const imgUrl   = enc?.getAttribute('url') || null;
+        const fullTitle = item.querySelector('title').textContent;
+        const link      = item.querySelector('link').textContent;
+        const summary   = item.querySelector('description').textContent;
+        const dateText  = item.querySelector('pubDate').textContent;
+        const enc       = item.querySelector('enclosure');
+        const imgUrl    = enc?.getAttribute('url') || null;
 
         const card = document.createElement('div');
         card.className = 'card';
 
         if (imgUrl) {
-          const img = document.createElement('img');
-          img.className = 'thumb';
-          img.src       = imgUrl;
-          card.appendChild(img);
+          const thumb = document.createElement('img');
+          thumb.className = 'thumb';
+          thumb.src       = imgUrl;
+          card.appendChild(thumb);
         }
 
         const c = document.createElement('div');
@@ -89,11 +97,14 @@
         const a  = document.createElement('a');
         a.href        = link;
         a.target      = '_blank';
+<<<<<<< HEAD
         a.textContent = title.replace(/^(Launch|Event):\s*/, '');
+=======
+        a.textContent = fullTitle.replace(/^(Launch|Event):\s*/, '');
+>>>>>>> 684007d (Fix event images + summary + date/time; remove event status)
         h3.appendChild(a);
         c.appendChild(h3);
 
-        // summary
         if (summary) {
           const sum = document.createElement('div');
           sum.className   = 'summary';
@@ -101,14 +112,22 @@
           c.appendChild(sum);
         }
 
+<<<<<<< HEAD
         // date/time
+=======
+>>>>>>> 684007d (Fix event images + summary + date/time; remove event status)
         const dt = document.createElement('div');
         dt.className   = 'date';
         dt.textContent = new Date(dateText).toLocaleString();
         c.appendChild(dt);
 
+<<<<<<< HEAD
         // QR only on events
         if (/^Event:/.test(title)) {
+=======
+        // only events get a QR
+        if (/^Event:/.test(fullTitle)) {
+>>>>>>> 684007d (Fix event images + summary + date/time; remove event status)
           const qr = document.createElement('img');
           qr.className = 'qr';
           qr.src       = 'https://api.qrserver.com/v1/create-qr-code/'
@@ -118,8 +137,14 @@
         }
 
         card.appendChild(c);
+<<<<<<< HEAD
         if (/^Launch:/.test(title)) launchesEl.appendChild(card);
         else                        eventsEl.appendChild(card);
+=======
+
+        if (/^Launch:/.test(fullTitle)) launchesEl.appendChild(card);
+        else                              eventsEl.appendChild(card);
+>>>>>>> 684007d (Fix event images + summary + date/time; remove event status)
       });
 
       // single “more launches” QR at bottom
@@ -130,12 +155,17 @@
           <p>For more launch details, scan below:</p>
           <img class="qr"
                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}"
-               alt="Scan for more launches">
+               alt="More launches QR">
         </div>`;
-      launchesEl.appendChild(scan);
+      document.getElementById('launches').appendChild(scan);
     }
 
     document.addEventListener('DOMContentLoaded', loadFeed);
   </script>
 </body>
 </html>
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> 684007d (Fix event images + summary + date/time; remove event status)
