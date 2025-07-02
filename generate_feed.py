@@ -27,11 +27,11 @@ def scrape_launches():
         mission = block.select_one("p strong").get_text(strip=True)
         status_line = block.select_one("span.card-launches__status").get_text(strip=True)
         status = status_line.split(":",1)[1].strip() if ":" in status_line else status_line
-        ps = block.select("p")
-        description = ps[1].get_text(strip=True) if len(ps) > 1 else ""
+        desc_ps = block.select("p")
+        description = desc_ps[1].get_text(strip=True) if len(desc_ps)>1 else ""
 
-        # launch image
-        fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
+        # image
+        fig = block.find_previous_sibling("figure.card__image") or block.select_one("figure.card__image")
         img_tag = fig.find("img") if fig else None
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
@@ -56,14 +56,20 @@ def scrape_events():
     soup = BeautifulSoup(resp.text, "html.parser")
 
     events = []
-    for title_tag in soup.find_all("h4"):
-        title = title_tag.get_text(strip=True)
+    for card in soup.select("div.card__content"):
+        # title
+        h4 = card.find("h4")
+        if not h4: 
+            continue
+        title = h4.get_text(strip=True)
 
-        ul = title_tag.find_next_sibling("ul")
+        # date/time
+        ul = h4.find_next_sibling("ul")
         if not ul:
             continue
         lis = ul.find_all("li")
         raw_date = lis[0].get_text(strip=True)
+        # split off a possible range
         first_date = raw_date.split("–")[0].split("-")[0].strip()
         time_str   = lis[1].get_text(strip=True).replace("Time start:", "").strip() if len(lis)>1 else ""
         try:
@@ -72,20 +78,20 @@ def scrape_events():
         except ValueError:
             iso = datetime.strptime(first_date, "%B %d, %Y").date().isoformat()
 
-        link_tag = title_tag.find_next("a", string=lambda s: s and "View Event" in s)
-        url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
+        # link
+        a = card.find("a", string=lambda s: s and "View Event" in s)
+        url = a["href"] if a and a.has_attr("href") else None
 
-        card = title_tag.find_parent("div.card__content")
-        # description
-        ps = card.select("p") if card else []
+        # summary/description
+        ps = card.select("p")
         description = ps[1].get_text(strip=True) if len(ps)>1 else (ps[0].get_text(strip=True) if ps else "")
 
-        # event image from preceding <figure> or inside block
-        fig = card.find_previous_sibling("figure", class_="card__image") or card.select_one("figure.card__image")
+        # image
+        fig = card.find_previous_sibling("figure.card__image") or card.select_one("figure.card__image")
         if fig:
             img_tag = fig.find("img")
         else:
-            img_tag = card.select_one("img")
+            img_tag = card.find("img")
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
         events.append({
@@ -109,8 +115,7 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
         it = ET.SubElement(channel, 'item')
         ET.SubElement(it, 'title').text       = f"{kind}: {item.get('mission', item.get('title'))}"
         ET.SubElement(it, 'link').text        = item.get('url') or ''
-        desc = item.get('description','')
-        ET.SubElement(it, 'description').text = desc
+        ET.SubElement(it, 'description').text = item.get('description','')
         ET.SubElement(it, 'pubDate').text     = datetime.fromisoformat(item['datetime']).strftime('%a, %d %b %Y %H:%M:%S GMT')
         guid_text = item.get('mission') or item.get('title')
         ET.SubElement(it, 'guid').text        = f"{kind.lower()}-{guid_text}-{item['datetime']}"
@@ -122,13 +127,12 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
     for e in events:
         add_item(e, "Event")
 
-    xml_str = minidom.parseString(ET.tostring(rss)).toprettyxml(indent="  ")
+    pretty = minidom.parseString(ET.tostring(rss)).toprettyxml(indent="  ")
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(xml_str)
+        f.write(pretty)
     print(f"Generated {filename}")
 
 if __name__ == "__main__":
     launches = scrape_launches()
     events   = scrape_events()
     create_rss(launches, events)
-
