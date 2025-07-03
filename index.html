@@ -2,46 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="refresh" content="3600"> <!-- auto-reload every hour -->
-  <title>Upcoming Launches & Events</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta http-equiv="refresh" content="3600"/>
+  <title>Upcoming Launches &amp; Events</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .summary-line-clamp {
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-  </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
   <header class="bg-blue-900 text-white p-4 flex flex-col md:flex-row items-center justify-center gap-4">
     <img src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
-         alt="Visit Space Coast Logo"
-         class="w-56 h-auto">
-    <h1 class="text-2xl font-bold">Upcoming Launches & Events</h1>
+         alt="Visit Space Coast Logo" class="w-56 h-auto">
+    <h1 class="text-2xl font-bold">Upcoming Launches &amp; Events</h1>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <!-- Upcoming Launches Section -->
     <section class="mb-12">
       <h2 class="text-2xl font-bold border-b-2 border-blue-800 pb-2 mb-6">Upcoming Launches</h2>
       <div id="launches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </section>
 
-    <!-- Launch Map Section -->
     <section class="mb-12 bg-white rounded-lg shadow-md overflow-hidden">
       <h2 class="text-xl font-bold bg-blue-800 text-white p-4">Launch Viewing Locations</h2>
       <div class="p-4">
-        <img width="838" height="569" 
-             src="https://www.visitspacecoast.com/wp-content/uploads/2023/12/Launch-Viewing-Map.png" 
-             alt="Launch Viewing Map screenshot" 
-             class="w-full h-auto rounded-lg">
+        <img src="https://www.visitspacecoast.com/wp-content/uploads/2023/12/Launch-Viewing-Map.png"
+             alt="Launch Viewing Map" class="w-full h-auto rounded-lg">
       </div>
     </section>
 
-    <!-- Upcoming Events Section -->
     <section class="mb-12">
       <h2 class="text-2xl font-bold border-b-2 border-blue-800 pb-2 mb-6">Upcoming Events</h2>
       <div id="events" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
@@ -51,13 +37,11 @@
   <footer class="bg-gray-800 text-white p-6 text-center">
     <div class="flex flex-col items-center">
       <img src="https://www.visitspacecoast.com/wp-content/uploads/2025/06/CRS21-wide-scaled.jpg"
-           alt="Space Coast Launches Banner" 
-           class="w-full max-w-4xl rounded-lg mb-4">
+           alt="Space Coast Banner" class="w-full max-w-4xl rounded-lg mb-4">
       <div class="bg-gray-700 p-4 rounded-lg inline-block">
         <p class="text-xl font-semibold mb-2">Download the Official App</p>
         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
-             alt="QR code for Space Coast Launches app - Scan to download"
-             class="mx-auto">
+             alt="QR for App" class="mx-auto">
       </div>
       <p class="mt-4">Data provided by <a href="https://www.visitspacecoast.com" class="text-blue-300 hover:text-blue-100">Visit Space Coast</a></p>
     </div>
@@ -65,112 +49,84 @@
 
   <script>
     async function loadFeed() {
-      try {
-        const resp = await fetch('spacecoast_feed.xml');
-        const text = await resp.text();
-        const xml = new DOMParser().parseFromString(text, 'application/xml');
-        const items = Array.from(xml.querySelectorAll('item'));
+      const resp = await fetch('spacecoast_feed.xml');
+      const xml  = new DOMParser().parseFromString(await resp.text(),'application/xml');
+      const items = [...xml.querySelectorAll('item')];
+      const L = document.getElementById('launches');
+      const E = document.getElementById('events');
 
-        const launchesEl = document.getElementById('launches');
-        const eventsEl = document.getElementById('events');
+      items.forEach(i => {
+        const fullTitle = i.querySelector('title').textContent;
+        const title     = fullTitle.replace(/^(Launch|Event):\s*/,'');
+        const link      = i.querySelector('link').textContent;
+        const desc      = i.querySelector('description').textContent.trim();
+        const dtText    = i.querySelector('pubDate')?.textContent;
+        const enc       = i.querySelector('enclosure');
+        const imgUrl    = enc?.getAttribute('url') || 'https://placehold.co/600x400?text=No+Image';
+        const isLaunch  = fullTitle.startsWith('Launch:');
 
-        const createCard = (item, isLaunch) => {
-          const fullTitle = item.querySelector('title').textContent;
-          const title = fullTitle.replace(/^(Launch|Event):\s*/, '');
-          const link = item.querySelector('link').textContent;
-          const rawDesc = item.querySelector('description')?.textContent || '';
-          const dateText = item.querySelector('pubDate')?.textContent;
-          const enc = item.querySelector('enclosure');
-          const imgUrl = enc?.getAttribute('url') || 'https://placehold.co/600x400?text=Space+Launch';
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
 
-          const card = document.createElement('div');
-          card.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full';
+        // image
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = title;
+        img.className = 'w-full h-48 object-cover';
+        img.onerror = ()=>{ img.src = 'https://placehold.co/600x400?text=No+Image'; };
+        card.appendChild(img);
 
-          // Image
-          const imgContainer = document.createElement('div');
-          imgContainer.className = 'relative';
-          imgContainer.innerHTML = `
-            <img src="${imgUrl}" 
-                 alt="${title} event image" 
-                 class="w-full h-48 object-cover"
-                 onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Space+Event'">
-          `;
-          card.appendChild(imgContainer);
+        // content
+        const c = document.createElement('div');
+        c.className = 'p-4 flex-grow flex flex-col';
 
-          // Content
-          const content = document.createElement('div');
-          content.className = 'p-4 flex-grow flex flex-col';
+        const h3 = document.createElement('h3');
+        h3.className = 'text-xl font-semibold mb-2';
+        h3.innerHTML = `<a href="${link}" target="_blank" class="text-blue-700 hover:text-blue-900">${title}</a>`;
+        c.appendChild(h3);
 
-          // Title
-          const titleEl = document.createElement('h3');
-          titleEl.className = 'text-xl font-semibold mb-2';
-          titleEl.innerHTML = `<a href="${link}" target="_blank" class="text-blue-700 hover:text-blue-900">${title}</a>`;
-          content.appendChild(titleEl);
+        // summary
+        const p = document.createElement('p');
+        p.className = 'text-gray-700 mb-4';
+        p.textContent = desc;
+        c.appendChild(p);
 
-          // Description
-          const descEl = document.createElement('p');
-          descEl.className = 'text-gray-700 mb-4 summary-line-clamp';
-          descEl.textContent = isLaunch ? rawDesc.split('\n').slice(1).join(' ').trim() : rawDesc.trim();
-          content.appendChild(descEl);
+        // date/time
+        if (dtText) {
+          const d = document.createElement('p');
+          d.className = 'text-sm text-gray-500 mt-auto';
+          const dt = new Date(dtText);
+          d.textContent = dt.toLocaleString('en-US', {
+            weekday: 'short', month: 'short', day: 'numeric',
+            hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York'
+          });
+          c.appendChild(d);
+        }
 
-          // Date
-          if (dateText) {
-            const dateEl = document.createElement('p');
-            dateEl.className = 'text-sm text-gray-500 mt-2';
-            const parsedDate = new Date(dateText);
-            dateEl.textContent = parsedDate.toLocaleString('en-US', {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              timeZone: 'America/New_York'
-            });
-            content.appendChild(dateEl);
-          }
+        // event QR
+        if (!isLaunch) {
+          const qr = document.createElement('img');
+          qr.className = 'w-32 h-32 mx-auto mt-4';
+          qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link)}`;
+          qr.alt = `Scan to open ${title}`;
+          c.appendChild(qr);
+        }
 
-          card.appendChild(content);
-          return card;
-        };
+        card.appendChild(c);
+        ;(isLaunch? L : E).appendChild(card);
+      });
 
-        items.forEach(item => {
-          const isLaunch = item.querySelector('title').textContent.startsWith('Launch:');
-          const card = createCard(item, isLaunch);
-          
-          if (isLaunch) {
-            launchesEl.appendChild(card);
-          } else {
-            eventsEl.appendChild(card);
-          }
-        });
-
-        // Add "More Launches" card
-        const moreLaunches = document.createElement('div');
-        moreLaunches.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
-        moreLaunches.innerHTML = `
-          <div class="p-6 text-center h-full flex flex-col justify-center">
-            <h3 class="text-xl font-semibold mb-2">More Launches</h3>
-            <p class="text-gray-600 mb-4">Scan for complete launch schedule</p>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}" 
-                 alt="QR code for complete launch schedule"
-                 class="w-32 h-32 mx-auto">
-          </div>
-        `;
-        launchesEl.appendChild(moreLaunches);
-
-      } catch (error) {
-        console.error('Error loading feed:', error);
-        document.getElementById('launches').innerHTML = `
-          <div class="col-span-full text-center py-12">
-            <p class="text-lg text-red-600">Error loading launch data. Please try again later.</p>
-          </div>
-        `;
-        document.getElementById('events').innerHTML = `
-          <div class="col-span-full text-center py-12">
-            <p class="text-lg text-red-600">Error loading event data. Please try again later.</p>
-          </div>
-        `;
-      }
+      // more launches QR
+      const more = document.createElement('div');
+      more.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
+      more.innerHTML = `
+        <div class="p-6 text-center flex-grow flex flex-col justify-center">
+          <h3 class="text-xl font-semibold mb-2">More Launches</h3>
+          <p class="text-gray-600 mb-4">Scan for complete schedule</p>
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(BASE+'/launches/')}"
+               alt="More launches QR" class="w-32 h-32 mx-auto">
+        </div>`;
+      L.appendChild(more);
     }
 
     document.addEventListener('DOMContentLoaded', loadFeed);
