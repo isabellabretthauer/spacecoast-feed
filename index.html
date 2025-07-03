@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="refresh" content="3600"> <!-- auto-reload every hour -->
-  <title>Space Coast Launches & Events</title>
+  <title>Upcoming Launches & Events</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .summary-line-clamp {
@@ -20,31 +20,25 @@
     <img src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
          alt="Visit Space Coast Logo"
          class="w-56 h-auto">
-    <h1 class="text-2xl font-bold">Space Coast Launches & Events</h1>
+    <h1 class="text-2xl font-bold">Upcoming Launches & Events</h1>
   </header>
 
-  <!-- App Download QR -->
-  <div class="text-center my-6 p-4 bg-white shadow-md rounded-lg max-w-md mx-auto">
-    <h2 class="text-xl font-semibold mb-2">Download the Official App</h2>
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
-         alt="QR code for Space Coast Launches app - Scan to download the official app"
-         class="mx-auto">
-  </div>
-
   <main class="max-w-6xl mx-auto px-4 py-6">
-    <!-- Launch Map Section -->
-    <section class="mb-12 bg-white rounded-lg shadow-md overflow-hidden">
-      <h2 class="text-xl font-bold bg-blue-800 text-white p-4">Launch Viewing Locations</h2>
-      <div class="p-4">
-        <iframe src="https://www.google.com/maps/d/embed?mid=1YJjDAvSIrVE_7vvAPdbp-HdqbkA" 
-                width="100%" height="500" style="border:0;" allowfullscreen></iframe>
-      </div>
-    </section>
-
     <!-- Upcoming Launches Section -->
     <section class="mb-12">
       <h2 class="text-2xl font-bold border-b-2 border-blue-800 pb-2 mb-6">Upcoming Launches</h2>
       <div id="launches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- Launch Map Section -->
+    <section class="mb-12 bg-white rounded-lg shadow-md overflow-hidden">
+      <h2 class="text-xl font-bold bg-blue-800 text-white p-4">Launch Viewing Locations</h2>
+      <div class="p-4">
+        <img width="838" height="569" 
+             src="https://www.visitspacecoast.com/wp-content/uploads/2023/12/Launch-Viewing-Map.png" 
+             alt="Launch Viewing Map screenshot" 
+             class="w-full h-auto rounded-lg">
+      </div>
     </section>
 
     <!-- Upcoming Events Section -->
@@ -87,7 +81,7 @@
           const rawDesc = item.querySelector('description')?.textContent || '';
           const dateText = item.querySelector('pubDate')?.textContent;
           const enc = item.querySelector('enclosure');
-          const imgUrl = enc?.getAttribute('url') || 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/88ce5d5c-5bab-41a3-948c-09f729d2cc16.png';
+          const imgUrl = enc?.getAttribute('url') || 'https://placehold.co/600x400?text=Space+Launch';
           
           // Extract QR code from content:encoded if it exists
           const encoded = item.querySelector('encoded');
@@ -109,7 +103,7 @@
             <img src="${imgUrl}" 
                  alt="${title} event image" 
                  class="w-full h-48 object-cover"
-                 onerror="this.onerror=null;this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/02f3ae0e-49fc-4492-9d71-cd512561318b.png'">
+                 onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Space+Event'">
           `;
           card.appendChild(imgContainer);
 
@@ -183,7 +177,14 @@
           if (isLaunch) {
             launchesEl.appendChild(card);
           } else {
-            eventsEl.appendChild(card);
+            // Extract event image
+            const eventImg = item.querySelector('img');
+            if (eventImg) {
+              const eventImageUrl = eventImg.getAttribute('src');
+              const eventCard = createCard(item, false);
+              eventCard.querySelector('img').src = eventImageUrl; // Set event image
+              eventsEl.appendChild(eventCard);
+            }
           }
         });
 
