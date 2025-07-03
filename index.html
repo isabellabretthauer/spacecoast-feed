@@ -1,118 +1,203 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta http-equiv="refresh" content="3600"/>
-  <title>Launches &amp; Events</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="refresh" content="3600"> <!-- auto-reload every hour -->
+  <title>Space Coast Launches & Events</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    body{font-family:sans-serif;margin:0;padding:0;background:#f5f5f5;color:#333}
-    header{display:flex;align-items:center;justify-content:center;background:#004080;color:#fff;padding:1rem;gap:1rem}
-    header img{width:230px;height:66px;object-fit:contain}
-    h1{margin:0;font-size:1.5rem}
-    main{max-width:960px;margin:1rem auto;padding:0 1rem}
-    section+section{margin-top:2rem}
-    h2{border-bottom:2px solid #004080;padding-bottom:.5rem;margin-bottom:1rem}
-    .cards{display:flex;flex-wrap:wrap;gap:1rem}
-    .card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.1);flex:1 1 calc(50% - 1rem);box-sizing:border-box}
-    .thumb{width:100%;display:block}
-    .card-content{padding:1rem}
-    .card-content h3{margin:0 0 .5rem;font-size:1.1rem}
-    .card-content a{color:#004080;text-decoration:none}
-    .card-content a:hover{text-decoration:underline}
-    .status{font-weight:bold;margin-bottom:.5rem;color:#555}
-    .summary{font-size:.95rem;color:#333;margin-bottom:.5rem}
-    .date{font-size:.9rem;color:#666;margin-top:.5rem}
-    .qr{display:block;width:150px;height:150px;margin:.5rem auto}
-    @media(max-width:600px){.card{flex:1 1 100%}}
+    .summary-line-clamp {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
   </style>
 </head>
-<body>
-  <header>
-    <img src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png" alt="Space Coast"/>
-    <h1>Launches &amp; Events</h1>
+<body class="bg-gray-50 text-gray-800">
+  <header class="bg-blue-900 text-white p-4 flex flex-col md:flex-row items-center justify-center gap-4">
+    <img src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
+         alt="Visit Space Coast Logo"
+         class="w-56 h-auto">
+    <h1 class="text-2xl font-bold">Space Coast Launches & Events</h1>
   </header>
-  <main>
-    <section>
-      <h2>Upcoming Launches</h2>
-      <img class="banner" src="https://www.visitspacecoast.com/wp-content/uploads/2025/06/CRS21-wide-scaled.jpg" alt="CRS-21"/>
-      <div id="launches" class="cards"></div>
+
+  <!-- App Download QR -->
+  <div class="text-center my-6 p-4 bg-white shadow-md rounded-lg max-w-md mx-auto">
+    <h2 class="text-xl font-semibold mb-2">Download the Official App</h2>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
+         alt="QR code for Space Coast Launches app - Scan to download the official app"
+         class="mx-auto">
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <!-- Launch Map Section -->
+    <section class="mb-12 bg-white rounded-lg shadow-md overflow-hidden">
+      <h2 class="text-xl font-bold bg-blue-800 text-white p-4">Launch Viewing Locations</h2>
+      <div class="p-4">
+        <img src="https://placehold.co/1200x600?text=Space+Coast+Launch+Viewing+Map" 
+             alt="Map showing launch viewing locations along Florida's Space Coast with markers for best viewing spots"
+             class="w-full h-auto rounded">
+      </div>
     </section>
-    <section>
-      <h2>Upcoming Events</h2>
-      <div id="events" class="cards"></div>
+
+    <!-- Upcoming Launches Section -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold border-b-2 border-blue-800 pb-2 mb-6">Upcoming Launches</h2>
+      <div id="launches" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </section>
+
+    <!-- Upcoming Events Section -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold border-b-2 border-blue-800 pb-2 mb-6">Upcoming Events</h2>
+      <div id="events" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </section>
   </main>
-  <div id="app-qr" style="text-align:center;margin:2rem 0">
-    <p>Download the official Space Coast Launches app:</p>
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
-         alt="App QR"/>
-  </div>
+
+  <footer class="bg-gray-800 text-white p-6 text-center">
+    <p>Data provided by <a href="https://www.visitspacecoast.com" class="text-blue-300 hover:text-blue-100">Visit Space Coast</a></p>
+  </footer>
+
   <script>
-    function firstNSentences(t,n=3){
-      const p=t.split(/(?<=[.?!])\s+/);
-      return p.slice(0,n).join(" ") + (p.length>n?"…":"");
+    async function loadFeed() {
+      try {
+        const resp = await fetch('spacecoast_feed.xml');
+        const text = await resp.text();
+        const xml = new DOMParser().parseFromString(text, 'application/xml');
+        const items = Array.from(xml.querySelectorAll('item'));
+
+        const launchesEl = document.getElementById('launches');
+        const eventsEl = document.getElementById('events');
+
+        const createCard = (item, isLaunch) => {
+          const fullTitle = item.querySelector('title').textContent;
+          const title = fullTitle.replace(/^(Launch|Event):\s*/, '');
+          const link = item.querySelector('link').textContent;
+          const rawDesc = item.querySelector('description')?.textContent || '';
+          const dateText = item.querySelector('pubDate')?.textContent;
+          const enc = item.querySelector('enclosure');
+          const imgUrl = enc?.getAttribute('url') || 'https://placehold.co/600x400?text=Space+Launch';
+          
+          // Extract QR code from content:encoded if it exists
+          const encoded = item.querySelector('encoded');
+          let qrCode = '';
+          if (encoded) {
+            const qrMatch = encoded.textContent.match(/src='([^']+)'/);
+            qrCode = qrMatch ? qrMatch[1] : '';
+          } else {
+            qrCode = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link)}`;
+          }
+
+          const card = document.createElement('div');
+          card.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full';
+
+          // Image
+          const imgContainer = document.createElement('div');
+          imgContainer.className = 'relative';
+          imgContainer.innerHTML = `
+            <img src="${imgUrl}" 
+                 alt="${title} event image" 
+                 class="w-full h-48 object-cover"
+                 onerror="this.src='https://placehold.co/600x400?text=Space+Event'">
+          `;
+          card.appendChild(imgContainer);
+
+          // Content
+          const content = document.createElement('div');
+          content.className = 'p-4 flex-grow flex flex-col';
+
+          // Title
+          const titleEl = document.createElement('h3');
+          titleEl.className = 'text-xl font-semibold mb-2';
+          titleEl.innerHTML = `<a href="${link}" target="_blank" class="text-blue-700 hover:text-blue-900">${title}</a>`;
+          content.appendChild(titleEl);
+
+          // Status (for launches)
+          if (isLaunch) {
+            const [statusLine, ...descParts] = rawDesc.split('\n');
+            const status = document.createElement('p');
+            status.className = 'text-sm font-medium text-gray-600 mb-2';
+            status.textContent = statusLine;
+            content.appendChild(status);
+          }
+
+          // Description
+          const descEl = document.createElement('p');
+          descEl.className = 'text-gray-700 mb-4 summary-line-clamp';
+          descEl.textContent = isLaunch 
+            ? rawDesc.split('\n').slice(1).join(' ').trim() 
+            : rawDesc.trim();
+          content.appendChild(descEl);
+
+          // QR Code
+          if (qrCode) {
+            const qrContainer = document.createElement('div');
+            qrContainer.className = 'mt-auto pt-2 border-t border-gray-200 text-center';
+            qrContainer.innerHTML = `
+              <p class="text-xs text-gray-500 mb-1">Scan for details</p>
+              <img src="${qrCode}" 
+                   alt="QR code for ${title}" 
+                   class="w-24 h-24 mx-auto">
+            `;
+            content.appendChild(qrContainer);
+          }
+
+          // Date
+          if (dateText) {
+            const dateEl = document.createElement('p');
+            dateEl.className = 'text-sm text-gray-500 mt-2';
+            dateEl.textContent = new Date(dateText).toLocaleString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+            content.appendChild(dateEl);
+          }
+
+          card.appendChild(content);
+          return card;
+        };
+
+        items.forEach(item => {
+          const isLaunch = item.querySelector('title').textContent.startsWith('Launch:');
+          const card = createCard(item, isLaunch);
+          
+          if (isLaunch) {
+            launchesEl.appendChild(card);
+          } else {
+            eventsEl.appendChild(card);
+          }
+        });
+
+        // Add "More Launches" card
+        const moreLaunches = document.createElement('div');
+        moreLaunches.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
+        moreLaunches.innerHTML = `
+          <div class="p-6 text-center h-full flex flex-col justify-center">
+            <h3 class="text-xl font-semibold mb-2">More Launches</h3>
+            <p class="text-gray-600 mb-4">Scan for complete launch schedule</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}" 
+                 alt="QR code for complete launch schedule"
+                 class="w-32 h-32 mx-auto">
+          </div>
+        `;
+        launchesEl.appendChild(moreLaunches);
+
+      } catch (error) {
+        console.error('Error loading feed:', error);
+        document.getElementById('launches').innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <p class="text-lg text-red-600">Error loading launch data. Please try again later.</p>
+          </div>
+        `;
+      }
     }
-    async function loadFeed(){
-      const res=await fetch("spacecoast_feed.xml");
-      const xml=new DOMParser().parseFromString(await res.text(),"application/xml");
-      const items=[...xml.querySelectorAll("item")];
-      const L=document.getElementById("launches"),E=document.getElementById("events");
-      items.forEach(i=>{
-        const ti=i.querySelector("title").textContent,
-              lk=i.querySelector("link").textContent,
-              ds=i.querySelector("description").textContent||"",
-              pd=i.querySelector("pubDate").textContent,
-              enc=i.querySelector("enclosure"),
-              im=enc?enc.getAttribute("url"):null,
-              isL=ti.startsWith("Launch:");
-        const c=document.createElement("div");c.className="card";
-        if(im){
-          const img=document.createElement("img");
-          img.className="thumb";img.src=im;c.appendChild(img);
-        }
-        const cc=document.createElement("div");cc.className="card-content";
-        const h3=document.createElement("h3"),a=document.createElement("a");
-        a.href=lk;a.target="_blank";a.textContent=ti.replace(/^(Launch|Event):\s*/,"");
-        h3.appendChild(a);cc.appendChild(h3);
-        if(isL){
-          const [st, ...rest]=ds.split("\n");
-          if(st){
-            const d=document.createElement("div");
-            d.className="status";d.textContent=st;cc.appendChild(d);
-          }
-          const r=rest.join("\n").trim();
-          if(r){
-            const s=document.createElement("div");
-            s.className="summary";s.textContent=r;cc.appendChild(s);
-          }
-        } else {
-          const sn=firstNSentences(ds,3);
-          if(sn){
-            const s=document.createElement("div");
-            s.className="summary";s.textContent=sn;cc.appendChild(s);
-          }
-          const qr=document.createElement("img");
-          qr.className="qr";
-          qr.src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data="+encodeURIComponent(lk);
-          cc.appendChild(qr);
-        }
-        const dt=document.createElement("div");
-        dt.className="date";dt.textContent=new Date(pd).toLocaleString();
-        cc.appendChild(dt);
-        c.appendChild(cc);
-        (isL?L:E).appendChild(c);
-      });
-      // more launches QR
-      const m=document.createElement("div");m.className="card";
-      m.innerHTML=`<div class="card-content" style="text-align:center">
-        <p>For more launch details, scan below:</p>
-        <img class="qr"
-             src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(BASE+"/launches/")}"
-             alt="More launches"></div>`;
-      L.appendChild(m);
-    }
-    document.addEventListener("DOMContentLoaded",loadFeed);
+
+    document.addEventListener('DOMContentLoaded', loadFeed);
   </script>
 </body>
 </html>
