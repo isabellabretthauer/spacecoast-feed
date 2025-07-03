@@ -81,17 +81,7 @@
           const rawDesc = item.querySelector('description')?.textContent || '';
           const dateText = item.querySelector('pubDate')?.textContent;
           const enc = item.querySelector('enclosure');
-          const imgUrl = enc?.getAttribute('url') || 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/ea04ebea-4134-42a8-83fa-c4bf611af87f.png';
-          
-          // Extract QR code from content:encoded if it exists
-          const encoded = item.querySelector('encoded');
-          let qrCode = '';
-          if (encoded) {
-            const qrMatch = encoded.textContent.match(/src='([^']+)'/);
-            qrCode = qrMatch ? qrMatch[1] : '';
-          } else {
-            qrCode = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(link)}`;
-          }
+          const imgUrl = enc?.getAttribute('url') || 'https://placehold.co/600x400?text=Space+Launch';
 
           const card = document.createElement('div');
           card.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full';
@@ -103,7 +93,7 @@
             <img src="${imgUrl}" 
                  alt="${title} event image" 
                  class="w-full h-48 object-cover"
-                 onerror="this.onerror=null;this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2a94e70f-48b3-4b5c-aa90-6f812bec3e2d.png'">
+                 onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Space+Event'">
           `;
           card.appendChild(imgContainer);
 
@@ -117,45 +107,18 @@
           titleEl.innerHTML = `<a href="${link}" target="_blank" class="text-blue-700 hover:text-blue-900">${title}</a>`;
           content.appendChild(titleEl);
 
-          // Status (for launches)
-          if (isLaunch) {
-            const [statusLine, ...descParts] = rawDesc.split('\n');
-            const status = document.createElement('p');
-            status.className = 'text-sm font-medium text-gray-600 mb-2';
-            status.textContent = statusLine;
-            content.appendChild(status);
-          }
-
           // Description
           const descEl = document.createElement('p');
           descEl.className = 'text-gray-700 mb-4 summary-line-clamp';
-          descEl.textContent = isLaunch 
-            ? rawDesc.split('\n').slice(1).join(' ').trim() 
-            : rawDesc.trim();
+          descEl.textContent = isLaunch ? rawDesc.split('\n').slice(1).join(' ').trim() : rawDesc.trim();
           content.appendChild(descEl);
-
-          // QR Code
-          if (qrCode) {
-            const qrContainer = document.createElement('div');
-            qrContainer.className = 'mt-auto pt-2 border-t border-gray-200 text-center';
-            qrContainer.innerHTML = `
-              <p class="text-xs text-gray-500 mb-1">Scan for details</p>
-              <img src="${qrCode}" 
-                   alt="QR code for ${title}" 
-                   class="w-24 h-24 mx-auto">
-            `;
-            content.appendChild(qrContainer);
-          }
 
           // Date
           if (dateText) {
             const dateEl = document.createElement('p');
             dateEl.className = 'text-sm text-gray-500 mt-2';
-            // Parse RFC-2822 format date first
             const parsedDate = new Date(dateText);
-            // Fallback to ISO format if needed
-            const fallbackDate = isNaN(parsedDate.getTime()) ? new Date(dateText.replace(' GMT','')) : parsedDate;
-            dateEl.textContent = fallbackDate.toLocaleString('en-US', {
+            dateEl.textContent = parsedDate.toLocaleString('en-US', {
               weekday: 'short',
               month: 'short',
               day: 'numeric',
