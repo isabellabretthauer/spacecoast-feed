@@ -81,7 +81,7 @@
           const rawDesc = item.querySelector('description')?.textContent || '';
           const dateText = item.querySelector('pubDate')?.textContent;
           const enc = item.querySelector('enclosure');
-          const imgUrl = enc?.getAttribute('url') || 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/63cd286d-605a-41a4-9822-497ea7a55a02.png';
+          const imgUrl = enc?.getAttribute('url') || 'https://placehold.co/600x300?text=Space+Launch';
 
           const card = document.createElement('div');
           card.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col h-full';
@@ -93,7 +93,7 @@
             <img src="${imgUrl}" 
                  alt="${title} event image" 
                  class="w-full h-48 object-cover"
-                 onerror="this.onerror=null;this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/52f6f6c5-e0d6-4a4b-b72a-788509a69ad9.png'">
+                 onerror="this.onerror=null;this.src='https://placehold.co/600x300?text=Event+Image'">
           `;
           card.appendChild(imgContainer);
 
@@ -161,20 +161,16 @@
           }
         });
 
-        // Add "More Launches" card
+        // Add "More Launches" card with QR code
         const moreLaunches = document.createElement('div');
         moreLaunches.className = 'bg-white rounded-lg shadow-md overflow-hidden flex flex-col';
         moreLaunches.innerHTML = `
           <div class="p-6 text-center h-full flex flex-col justify-center border border-blue-200">
-            <h3 class="text-xl font-semibold mb-2 text-blue-800">View Full Launch Schedule</h3>
+            <h3 class="text-xl font-semibold mb-2 text-blue-800">Scan for Full Launch Schedule</h3>
             <p class="text-gray-600 mb-4">See upcoming launches, directions and viewing tips</p>
-            <a href="https://www.visitspacecoast.com/launches/" 
-               class="text-blue-600 hover:text-blue-800 font-medium inline-flex items-center justify-center gap-1">
-              <span>Explore All</span>
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </a>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}" 
+                 alt="QR code for complete launch schedule"
+                 class="w-32 h-32 mx-auto">
           </div>
         `;
         launchesEl.appendChild(moreLaunches);
@@ -198,4 +194,3 @@
   </script>
 </body>
 </html>
-
