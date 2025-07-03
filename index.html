@@ -61,14 +61,10 @@
     <h1>Launches &amp; Events</h1>
   </header>
 
-  <main>
+ <main>
     <section>
       <h2>Upcoming Launches</h2>
-      <img
-        class="banner"
-        src="https://www.visitspacecoast.com/wp-content/uploads/2025/06/CRS21-wide-scaled.jpg"
-        alt="CRS-21 Wide"
-      />
+      <!-- banner… -->
       <div id="launches" class="cards"></div>
     </section>
 
@@ -78,120 +74,88 @@
     </section>
   </main>
 
-  <!-- App Download QR moved here -->
+  <!-- app QR at bottom -->
   <div id="app-qr" style="text-align:center; margin:2rem 0;">
     <p>Download the official Space Coast Launches app:</p>
-    <img
-      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
-      alt="QR for Space Coast Launches app"
-    />
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
+         alt="QR for Space Coast Launches app">
   </div>
 
   <script>
-    function firstNSentences(text, n=3) {
+    function firstNSentences(text,n=3){
       const parts = text.split(/(?<=[.?!])\s+/);
-      const slice = parts.slice(0,n).join(" ");
-      return parts.length > n ? slice + "…" : slice;
+      return parts.slice(0,n).join(" ") + (parts.length>n?"…":"");
     }
 
-    async function loadFeed() {
+    async function loadFeed(){
       const resp = await fetch('spacecoast_feed.xml');
-      const text = await resp.text();
-      const xml  = new DOMParser().parseFromString(text, 'application/xml');
+      const xml = new DOMParser().parseFromString(await resp.text(),'application/xml');
       const items = Array.from(xml.querySelectorAll('item'));
-
       const launchesEl = document.getElementById('launches');
       const eventsEl   = document.getElementById('events');
 
-      items.forEach(item => {
-        const fullTitle = item.querySelector('title').textContent;
-        const link      = item.querySelector('link').textContent;
-        const rawDesc   = item.querySelector('description')?.textContent || '';
-        const dateText  = item.querySelector('pubDate').textContent;
-        const enc       = item.querySelector('enclosure');
-        const imgUrl    = enc?.getAttribute('url') || null;
+      items.forEach(item=>{
+        const title = item.querySelector('title').textContent;
+        const link  = item.querySelector('link').textContent;
+        const raw   = item.querySelector('description')?.textContent||"";
+        const date  = item.querySelector('pubDate').textContent;
+        const enc   = item.querySelector('enclosure');
+        const img   = enc?.getAttribute('url')||null;
+        const isL   = title.startsWith('Launch:');
 
-        const isLaunch = fullTitle.startsWith('Launch:');
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        // thumbnail
-        if (imgUrl) {
-          const thumb = document.createElement('img');
-          thumb.className = 'thumb';
-          thumb.src       = imgUrl;
-          thumb.alt       = fullTitle;
-          card.appendChild(thumb);
+        const card = document.createElement('div'); card.className='card';
+        if(img){
+          const t = document.createElement('img');
+          t.className='thumb'; t.src=img; card.appendChild(t);
         }
+        const c = document.createElement('div'); c.className='card-content';
+        const h3= document.createElement('h3');
+        const a = document.createElement('a');
+        a.href=link; a.target='_blank'; a.textContent = title.replace(/^(Launch|Event):\s*/,'');
+        h3.appendChild(a); c.appendChild(h3);
 
-        const content = document.createElement('div');
-        content.className = 'card-content';
-
-        // title/link
-        const h3 = document.createElement('h3');
-        const a  = document.createElement('a');
-        a.href        = link;
-        a.target      = '_blank';
-        a.textContent = fullTitle.replace(/^(Launch|Event):\s*/, '');
-        h3.appendChild(a);
-        content.appendChild(h3);
-
-        if (isLaunch) {
-          // Status line + full summary
-          const [statusLine, ...descParts] = rawDesc.split('\n');
-          if (statusLine) {
-            const st = document.createElement('div');
-            st.className   = 'status';
-            st.textContent = statusLine;
-            content.appendChild(st);
+        if(isL){
+          const [st, ...rest] = raw.split('\n');
+          if(st){
+            const sdom = document.createElement('div');
+            sdom.className='status'; sdom.textContent = st; c.appendChild(sdom);
           }
-          const summary = descParts.join('\n').trim();
-          if (summary) {
-            const sum = document.createElement('div');
-            sum.className   = 'summary';
-            sum.textContent = summary;
-            content.appendChild(sum);
+          const desc = rest.join('\n').trim();
+          if(desc){
+            const ddom = document.createElement('div');
+            ddom.className='summary'; ddom.textContent=desc; c.appendChild(ddom);
           }
         } else {
-          // event: first 3 sentences, then QR
-          const short = firstNSentences(rawDesc, 3);
-          if (short) {
-            const sum = document.createElement('div');
-            sum.className   = 'summary';
-            sum.textContent = short;
-            content.appendChild(sum);
+          const snippet = firstNSentences(raw,3);
+          if(snippet){
+            const sdom = document.createElement('div');
+            sdom.className='summary'; sdom.textContent=snippet; c.appendChild(sdom);
           }
           const qr = document.createElement('img');
-          qr.className = 'qr';
-          qr.src       =
-            'https://api.qrserver.com/v1/create-qr-code/' +
-            '?size=150x150' +
-            '&data=' + encodeURIComponent(link);
-          qr.alt = 'Scan for details';
-          content.appendChild(qr);
+          qr.className='qr';
+          qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(link);
+          c.appendChild(qr);
         }
 
-        // date + time
-        const dt = document.createElement('div');
-        dt.className   = 'date';
-        dt.textContent = new Date(dateText).toLocaleString();
-        content.appendChild(dt);
+        const ddom = document.createElement('div');
+        ddom.className='date';
+        ddom.textContent = new Date(date).toLocaleString();
+        c.appendChild(ddom);
 
-        card.appendChild(content);
-        (isLaunch ? launchesEl : eventsEl).appendChild(card);
+        card.appendChild(c);
+        (isL?launchesEl:eventsEl).appendChild(card);
       });
 
-      // one “more launches” QR
+      // “more launches” QR
       const more = document.createElement('div');
-      more.className = 'card';
-      more.innerHTML = `
+      more.className='card';
+      more.innerHTML=`
         <div class="card-content" style="text-align:center;">
           <p>For more launch details, scan below:</p>
           <img class="qr"
-               src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}"
+               src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(BASE+'/launches/')}"
                alt="Scan for more launches">
-        </div>
-      `;
+        </div>`;
       launchesEl.appendChild(more);
     }
 
@@ -199,4 +163,3 @@
   </script>
 </body>
 </html>
-

@@ -1,3 +1,4 @@
+# generate_feed.py
 #!/usr/bin/env python3
 
 import requests
@@ -34,7 +35,7 @@ def scrape_launches():
         desc_ps = block.select("p")
         description = desc_ps[1].get_text(strip=True) if len(desc_ps) > 1 else ""
 
-        # grab the image from the preceding <figure class="card__image">
+        # image from the preceding <figure class="card__image">
         fig = block.find_previous_sibling(
             lambda tag: tag.name=="figure" and "card__image" in tag.get("class",[])
         ) or block.select_one("figure.card__image")
@@ -63,24 +64,17 @@ def scrape_events():
     soup = BeautifulSoup(resp.text, "html.parser")
 
     events = []
-    for block in soup.select("div.card__content"):
-        # title
-        title_tag = block.find("h4")
-        if not title_tag:
-            continue
+    for title_tag in soup.find_all("h4"):
         title = title_tag.get_text(strip=True)
 
         # date & time
-        ul = block.find("ul")
+        ul = title_tag.find_next_sibling("ul")
         if not ul:
             continue
         lis = ul.find_all("li")
         raw_date = lis[0].get_text(strip=True)
         first_date = raw_date.split("–")[0].split("-")[0].strip()
-        time_str = (lis[1].get_text(strip=True)
-                    .replace("Time start:", "")
-                    .strip()) if len(lis) > 1 else ""
-
+        time_str = lis[1].get_text(strip=True).replace("Time start:", "").strip() if len(lis)>1 else ""
         try:
             dt = datetime.strptime(f"{first_date} {time_str}", "%B %d, %Y %I:%M %p")
             iso = dt.isoformat()
@@ -90,20 +84,20 @@ def scrape_events():
             except ValueError:
                 iso = None
 
-        # summary (first <p> after the list)
+        # summary = first <p> after the list
         p = ul.find_next_sibling("p")
         summary = p.get_text(strip=True) if p else ""
 
         # event URL
-        link_tag = block.find("a", string=lambda s: s and "View Event" in s)
+        link_tag = title_tag.find_next("a", string=lambda s: s and "View Event" in s)
         url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
         if url and url.startswith("/"):
             url = BASE + url
 
-        # event image from the preceding figure
-        fig = block.find_previous_sibling(
+        # image from preceding figure
+        fig = title_tag.find_previous_sibling(
             lambda tag: tag.name=="figure" and "card__image" in tag.get("class",[])
-        ) or block.select_one("figure.card__image")
+        ) or title_tag.find_next("figure", class_="card__image")
         img_tag = fig.find("img") if fig else None
         img_url = img_tag.get("src") if img_tag and img_tag.has_attr("src") else None
 
@@ -130,8 +124,7 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
         label = item.get('mission') or item.get('title')
         ET.SubElement(it, 'title').text       = f"{kind}: {label}"
         ET.SubElement(it, 'link').text        = item.get('url') or ""
-        # description
-        if kind == "Launch":
+        if kind=="Launch":
             desc = f"Status: {item.get('status','')}"
             if item.get('description'):
                 desc += "\n" + item['description']
