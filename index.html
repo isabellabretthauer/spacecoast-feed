@@ -81,7 +81,7 @@
           const rawDesc = item.querySelector('description')?.textContent || '';
           const dateText = item.querySelector('pubDate')?.textContent;
           const enc = item.querySelector('enclosure');
-          const imgUrl = enc?.getAttribute('url') || 'https://placehold.co/600x400?text=Space+Launch';
+          const imgUrl = enc?.getAttribute('url') || 'https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/ea04ebea-4134-42a8-83fa-c4bf611af87f.png';
           
           // Extract QR code from content:encoded if it exists
           const encoded = item.querySelector('encoded');
@@ -103,7 +103,7 @@
             <img src="${imgUrl}" 
                  alt="${title} event image" 
                  class="w-full h-48 object-cover"
-                 onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Space+Event'">
+                 onerror="this.onerror=null;this.src='https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/2a94e70f-48b3-4b5c-aa90-6f812bec3e2d.png'">
           `;
           card.appendChild(imgContainer);
 
@@ -177,14 +177,7 @@
           if (isLaunch) {
             launchesEl.appendChild(card);
           } else {
-            // Extract event image
-            const eventImg = item.querySelector('img');
-            if (eventImg) {
-              const eventImageUrl = eventImg.getAttribute('src');
-              const eventCard = createCard(item, false);
-              eventCard.querySelector('img').src = eventImageUrl; // Set event image
-              eventsEl.appendChild(eventCard);
-            }
+            eventsEl.appendChild(card);
           }
         });
 
@@ -209,6 +202,11 @@
             <p class="text-lg text-red-600">Error loading launch data. Please try again later.</p>
           </div>
         `;
+        document.getElementById('events').innerHTML = `
+          <div class="col-span-full text-center py-12">
+            <p class="text-lg text-red-600">Error loading event data. Please try again later.</p>
+          </div>
+        `;
       }
     }
 
@@ -216,4 +214,3 @@
   </script>
 </body>
 </html>
-
