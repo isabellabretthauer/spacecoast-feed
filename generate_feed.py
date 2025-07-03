@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -16,25 +15,30 @@ def scrape_launches():
     launches = []
     seen = set()
     for block in soup.select("div.card__content"):
+        # extract date & time
         h6s = block.select("h6")
         if len(h6s) < 2:
             continue
-        date_s, time_s = h6s[0].get_text(strip=True), h6s[1].get_text(strip=True)
+        date_str = h6s[0].get_text(strip=True)
+        time_str = h6s[1].get_text(strip=True)
         try:
-            dt = datetime.strptime(f"{date_s} {time_s}", "%B %d, %Y %I:%M %p")
+            dt = datetime.strptime(f"{date_str} {time_str}", "%B %d, %Y %I:%M %p")
         except ValueError:
+            # skip malformed
             continue
         iso = dt.isoformat()
 
+        # title, status, description
         mission = block.select_one("p strong").get_text(strip=True)
-        status_txt = block.select_one("span.card-launches__status").get_text(strip=True)
-        status = status_txt.split(":",1)[1].strip() if ":" in status_txt else status_txt
+        status_line = block.select_one("span.card-launches__status").get_text(strip=True)
+        status = status_line.split(":",1)[1].strip() if ":" in status_line else status_line
+        ps = block.select("p")
+        description = ps[1].get_text(strip=True) if len(ps) > 1 else ""
 
-        desc_p = block.select("p")
-        description = desc_p[1].get_text(strip=True) if len(desc_p) > 1 else ""
-
-        # launch image from nearby <figure>
-        fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
+        # image from preceding <figure class="card__image">
+        fig = block.find_previous_sibling("figure", class_="card__image")
+        if not fig:
+            fig = block.select_one("figure.card__image")
         img = fig.find("img") if fig else None
         img_url = img.get("data-lazy-src") or img.get("src") if img else None
 
@@ -60,24 +64,22 @@ def scrape_events():
 
     events = []
     for block in soup.select("div.card__content"):
-        title_tag = block.find("h4")
-        if not title_tag:
+        # title
+        h4 = block.find("h4")
+        if not h4:
             continue
-        title = title_tag.get_text(strip=True)
+        title = h4.get_text(strip=True)
 
-        # date & time
+        # date/time
         ul = block.find("ul")
         if not ul:
             continue
         lis = ul.find_all("li")
         raw_date = lis[0].get_text(strip=True)
         date_only = raw_date.split("–")[0].split("-")[0].strip()
-        time_txt = (
-            lis[1].get_text(strip=True).replace("Time start:", "").strip()
-            if len(lis) > 1 else ""
-        )
+        time_part = lis[1].get_text(strip=True).replace("Time start:", "").strip() if len(lis)>1 else ""
         try:
-            dt = datetime.strptime(f"{date_only} {time_txt}", "%B %d, %Y %I:%M %p")
+            dt = datetime.strptime(f"{date_only} {time_part}", "%B %d, %Y %I:%M %p")
             iso = dt.isoformat()
         except ValueError:
             try:
@@ -85,62 +87,86 @@ def scrape_events():
             except ValueError:
                 iso = None
 
-        # summary (first <p> after UL)
+        # summary = first <p> after the <ul>
         p = ul.find_next_sibling("p")
-        summary = p.get_text(strip=True) if p else ""
+        description = p.get_text(strip=True) if p else ""
 
-        # URL
-        link_tag = block.find("a", string=lambda s: s and "View Event" in s)
-        url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
+        # URL = "View Event" link
+        a = block.find("a", string=lambda s: s and "View Event" in s)
+        url = a["href"] if a and a.has_attr("href") else None
         if url and url.startswith("/"):
             url = BASE + url
 
-        # event image (any <img> inside block)
-        img_tag = block.find("img")
-        img_url = img_tag.get("src") if img_tag and img_tag.has_attr("src") else None
+        # image = the nearest preceding <figure class="card__image"> or <img>
+        fig = block.find_previous_sibling("figure", class_="card__image")
+        if fig:
+            img = fig.find("img")
+            img_url = img.get("data-lazy-src") or img.get("src") if img else None
+        else:
+            img_tag = block.find_previous("img")
+            img_url = img_tag.get("src") if img_tag and img_tag.has_attr("src") else None
 
         events.append({
             "datetime":    iso,
             "title":       title,
-            "description": summary,
+            "description": description,
             "url":         url,
             "image":       img_url
         })
+
     return events
 
 def create_rss(launches, events, filename="spacecoast_feed.xml"):
-    rss = ET.Element("rss", version="2.0")
-    ch  = ET.SubElement(rss, "channel")
-    ET.SubElement(ch, "title").text       = "Visit Space Coast Launches & Events"
-    ET.SubElement(ch, "link").text        = BASE
-    ET.SubElement(ch, "description").text = "Automated feed of Space Coast launches and events"
-    ET.SubElement(ch, "lastBuildDate").text = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
+    rss     = ET.Element("rss", version="2.0")
+    channel = ET.SubElement(rss, "channel")
+    ET.SubElement(channel, "title").text       = "Visit Space Coast Launches & Events"
+    ET.SubElement(channel, "link").text        = BASE
+    ET.SubElement(channel, "description").text = "Automated feed of Space Coast launches and events"
+    ET.SubElement(channel, "lastBuildDate").text = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
 
-    def add_item(itm, kind):
-        it = ET.SubElement(ch, "item")
-        label = itm.get("mission") or itm.get("title")
+    def add_item(item, kind):
+        it = ET.SubElement(channel, "item")
+        label = item.get("mission") or item.get("title")
         ET.SubElement(it, "title").text = f"{kind}: {label}"
-        ET.SubElement(it, "link").text  = itm.get("url","")
-        # description: full for events, status+full for launches
-        if kind == "Launch":
-            desc = f"Status: {itm.get('status','')}\n{itm.get('description','')}"
-        else:
-            desc = itm.get("description","")
-        ET.SubElement(it, "description").text = desc
-        dt = itm.get("datetime")
-        if dt:
-            ET.SubElement(it, "pubDate").text = datetime.fromisoformat(dt).strftime("%a, %d %b %Y %H:%M:%S GMT")
-        ET.SubElement(it, "guid").text = f"{kind.lower()}-{label}-{dt}"
-        if itm.get("image"):
-            ET.SubElement(it, "enclosure", url=itm["image"], type="image/jpeg")
+        ET.SubElement(it, "link").text  = item.get("url","")
 
-    for l in launches: add_item(l, "Launch")
-    for e in events:   add_item(e, "Event")
+        # description: launches = status + desc, events = full summary
+        if kind == "Launch":
+            desc = f"{item['status']}"
+            if item.get("description"):
+                desc += "\n" + item["description"]
+        else:
+            desc = item.get("description","")
+        ET.SubElement(it, "description").text = desc
+
+        # pubDate
+        iso = item.get("datetime")
+        if iso:
+            # if only date, append midnight
+            if len(iso)==10:
+                dt = datetime.fromisoformat(iso)
+            else:
+                dt = datetime.fromisoformat(iso)
+            ET.SubElement(it, "pubDate").text = dt.strftime("%a, %d %b %Y %H:%M:%S GMT")
+
+        ET.SubElement(it, "guid").text = f"{kind.lower()}-{label}-{iso or ''}"
+
+        # image enclosure
+        if item.get("image"):
+            ET.SubElement(it, "enclosure", url=item["image"], type="image/jpeg")
+
+    for l in launches:
+        add_item(l, "Launch")
+    for e in events:
+        add_item(e, "Event")
 
     xml = parseString(ET.tostring(rss)).toprettyxml(indent="  ")
     with open(filename, "w", encoding="utf-8") as f:
         f.write(xml)
     print("Generated", filename)
 
-if __name__=="__main__":
-    create_rss(scrape_launches(), scrape_events())
+if __name__ == "__main__":
+    launches = scrape_launches()
+    events   = scrape_events()
+    create_rss(launches, events)
+
