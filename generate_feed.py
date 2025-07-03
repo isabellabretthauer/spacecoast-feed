@@ -13,12 +13,11 @@ def scrape_launches():
     seen = set()
     launches = []
     for card in soup.select("div.card__content"):
-        # only launch cards have two <h6> tags
         h6s = card.select("h6")
         if len(h6s) < 2:
             continue
 
-        # parse datetime
+        # parse date/time
         date_str, time_str = h6s[0].get_text(strip=True), h6s[1].get_text(strip=True)
         try:
             dt = datetime.strptime(f"{date_str} {time_str}", "%B %d, %Y %I:%M %p")
@@ -30,10 +29,10 @@ def scrape_launches():
         status_line = card.select_one("span.card-launches__status").get_text(strip=True)
         status = status_line.split(":",1)[1].strip() if ":" in status_line else status_line
 
-        ps = card.select("p")
-        description = ps[1].get_text(strip=True) if len(ps) > 1 else ""
+        desc_ps = card.select("p")
+        description = desc_ps[1].get_text(strip=True) if len(desc_ps) > 1 else ""
 
-        # find launch image in neighboring <figure class="card__image">
+        # image is in the sibling <figure class="card__image">
         fig = card.parent.select_one("figure.card__image")
         img_tag = fig.find("img") if fig else None
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
@@ -60,45 +59,57 @@ def scrape_events():
 
     events = []
     for card in soup.select("div.card__content"):
-        # skip launch cards
+        # skip anything that looks like a launch (two <h6>)
         if len(card.select("h6")) >= 2:
             continue
 
+        # title
         h4 = card.find("h4")
         if not h4:
             continue
         title = h4.get_text(strip=True)
 
-        # parse date/time from the <ul>
+        # date & time from the <ul>
         ul = h4.find_next_sibling("ul")
-        if not ul:
-            continue
-        lis = ul.find_all("li")
-        raw_date = lis[0].get_text(strip=True)
-        first_date = raw_date.split("–")[0].split("-")[0].strip()
-        time_str = lis[1].get_text(strip=True).replace("Time start:", "").strip() if len(lis)>1 else ""
+        date_text = time_text = ""
+        if ul:
+            lis = ul.find_all("li")
+            if lis:
+                date_text = lis[0].get_text(strip=True)
+            if len(lis) > 1:
+                time_text = lis[1].get_text(strip=True).replace("Time start:", "").strip()
+
+        # build ISO datetime
         try:
-            dt = datetime.strptime(f"{first_date} {time_str}", "%B %d, %Y %I:%M %p")
+            dt = datetime.strptime(f"{date_text} {time_text}", "%B %d, %Y %I:%M %p")
             iso = dt.isoformat()
-        except ValueError:
-            iso = datetime.strptime(first_date, "%B %d, %Y").date().isoformat()
+        except Exception:
+            try:
+                iso = datetime.strptime(date_text, "%B %d, %Y").date().isoformat()
+            except Exception:
+                iso = ""
 
-        # summary from first <p>
-        ps = card.find_all("p")
-        description = ps[0].get_text(strip=True) if ps else ""
+        # summary = first <p> that isn’t the title or “View Event”
+        summary = ""
+        for p in card.find_all("p"):
+            txt = p.get_text(strip=True)
+            if not txt or txt == title or "View Event" in txt:
+                continue
+            summary = txt
+            break
 
-        # link to “View Event”
+        # URL = the “View Event” link
         a = card.find("a", string=lambda s: s and "View Event" in s)
-        url = a["href"] if a and a.has_attr("href") else None
+        url = a["href"] if a and a.has_attr("href") else ""
 
-        # event image inside .wp-post-image
-        img = card.find("img", class_="wp-post-image")
-        img_url = img.get("data-lazy-src") or img.get("src") if img else None
+        # image = first flyer thumbnail
+        img_tag = card.find("img", class_="wp-post-image")
+        img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
         events.append({
             "datetime":    iso,
             "title":       title,
-            "description": description,
+            "description": summary,
             "url":         url,
             "image":       img_url,
         })
@@ -117,9 +128,10 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
         ET.SubElement(it, 'title').text       = f"{kind}: {item.get('mission', item.get('title'))}"
         ET.SubElement(it, 'link').text        = item.get('url') or ''
         ET.SubElement(it, 'description').text = item.get('description','')
-        ET.SubElement(it, 'pubDate').text     = datetime.fromisoformat(item['datetime']).strftime('%a, %d %b %Y %H:%M:%S GMT')
-        guid_text = item.get('mission') or item.get('title')
-        ET.SubElement(it, 'guid').text        = f"{kind.lower()}-{guid_text}-{item['datetime']}"
+        pub = item.get('datetime') or ""
+        ET.SubElement(it, 'pubDate').text     = datetime.fromisoformat(pub).strftime('%a, %d %b %Y %H:%M:%S GMT') if pub else ""
+        GUID = item.get('mission') or item.get('title')
+        ET.SubElement(it, 'guid').text        = f"{kind.lower()}-{GUID}-{item['datetime']}"
         if item.get('image'):
             ET.SubElement(it, 'enclosure', url=item['image'], type='image/jpeg')
 
@@ -128,9 +140,9 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
     for e in events:
         add_item(e, "Event")
 
-    pretty = minidom.parseString(ET.tostring(rss)).toprettyxml(indent="  ")
+    xml_str = minidom.parseString(ET.tostring(rss)).toprettyxml(indent="  ")
     with open(filename, "w", encoding="utf-8") as f:
-        f.write(pretty)
+        f.write(xml_str)
     print(f"Generated {filename}")
 
 if __name__ == "__main__":
