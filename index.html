@@ -13,10 +13,6 @@
     header img { width:230px; height:66px; object-fit:contain; }
     h1 { margin:0; font-size:1.5rem; }
 
-    /* App QR block */
-    #app-qr { text-align:center; margin:1rem 0; }
-    #app-qr img { width:150px; height:150px; }
-
     main { max-width:960px; margin:1rem auto; padding:0 1rem }
     section + section { margin-top:2rem }
     h2 {
@@ -65,15 +61,6 @@
     <h1>Launches &amp; Events</h1>
   </header>
 
-  <!-- App Download QR -->
-  <div id="app-qr">
-    <p>Download the official Space Coast Launches app:</p>
-    <img
-      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
-      alt="QR for Space Coast Launches app"
-    />
-  </div>
-
   <main>
     <section>
       <h2>Upcoming Launches</h2>
@@ -91,7 +78,22 @@
     </section>
   </main>
 
+  <!-- App Download QR moved here -->
+  <div id="app-qr" style="text-align:center; margin:2rem 0;">
+    <p>Download the official Space Coast Launches app:</p>
+    <img
+      src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
+      alt="QR for Space Coast Launches app"
+    />
+  </div>
+
   <script>
+    function firstNSentences(text, n=3) {
+      const parts = text.split(/(?<=[.?!])\s+/);
+      const slice = parts.slice(0,n).join(" ");
+      return parts.length > n ? slice + "…" : slice;
+    }
+
     async function loadFeed() {
       const resp = await fetch('spacecoast_feed.xml');
       const text = await resp.text();
@@ -110,7 +112,6 @@
         const imgUrl    = enc?.getAttribute('url') || null;
 
         const isLaunch = fullTitle.startsWith('Launch:');
-        // create card
         const card = document.createElement('div');
         card.className = 'card';
 
@@ -135,8 +136,8 @@
         h3.appendChild(a);
         content.appendChild(h3);
 
-        // launch: status + summary
         if (isLaunch) {
+          // Status line + full summary
           const [statusLine, ...descParts] = rawDesc.split('\n');
           if (statusLine) {
             const st = document.createElement('div');
@@ -152,14 +153,14 @@
             content.appendChild(sum);
           }
         } else {
-          // event: just summary
-          if (rawDesc) {
+          // event: first 3 sentences, then QR
+          const short = firstNSentences(rawDesc, 3);
+          if (short) {
             const sum = document.createElement('div');
             sum.className   = 'summary';
-            sum.textContent = rawDesc;
+            sum.textContent = short;
             content.appendChild(sum);
           }
-          // per-event QR
           const qr = document.createElement('img');
           qr.className = 'qr';
           qr.src       =
@@ -170,22 +171,17 @@
           content.appendChild(qr);
         }
 
-        // date/time for both
+        // date + time
         const dt = document.createElement('div');
         dt.className   = 'date';
         dt.textContent = new Date(dateText).toLocaleString();
         content.appendChild(dt);
 
         card.appendChild(content);
-
-        if (isLaunch) {
-          launchesEl.appendChild(card);
-        } else {
-          eventsEl.appendChild(card);
-        }
+        (isLaunch ? launchesEl : eventsEl).appendChild(card);
       });
 
-      // single “more launches” QR at bottom
+      // one “more launches” QR
       const more = document.createElement('div');
       more.className = 'card';
       more.innerHTML = `

@@ -34,12 +34,12 @@ def scrape_launches():
         desc_ps = block.select("p")
         description = desc_ps[1].get_text(strip=True) if len(desc_ps) > 1 else ""
 
-        # Fetch the figure immediately before or around this block
+        # grab the image from the preceding <figure class="card__image">
         fig = block.find_previous_sibling(
             lambda tag: tag.name=="figure" and "card__image" in tag.get("class",[])
         ) or block.select_one("figure.card__image")
         img_tag = fig.find("img") if fig else None
-        img_url = (img_tag.get("data-lazy-src") or img_tag.get("src")) if img_tag else None
+        img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
         key = (mission, iso)
         if key in seen:
@@ -63,43 +63,48 @@ def scrape_events():
     soup = BeautifulSoup(resp.text, "html.parser")
 
     events = []
-    for title_tag in soup.find_all("h4"):
-        # skip itinerary cards wrapped in .card__content
-        if title_tag.find_parent("div", class_="card__content"):
+    for block in soup.select("div.card__content"):
+        # title
+        title_tag = block.find("h4")
+        if not title_tag:
             continue
-
         title = title_tag.get_text(strip=True)
 
-        ul = title_tag.find_next_sibling("ul")
+        # date & time
+        ul = block.find("ul")
         if not ul:
             continue
         lis = ul.find_all("li")
         raw_date = lis[0].get_text(strip=True)
-        # take first day if range
-        date_only = raw_date.split("–")[0].split("-")[0].strip()
-        time_str = lis[1].get_text(strip=True).replace("Time start:", "").strip() if len(lis)>1 else ""
+        first_date = raw_date.split("–")[0].split("-")[0].strip()
+        time_str = (lis[1].get_text(strip=True)
+                    .replace("Time start:", "")
+                    .strip()) if len(lis) > 1 else ""
 
         try:
-            dt = datetime.strptime(f"{date_only} {time_str}", "%B %d, %Y %I:%M %p")
+            dt = datetime.strptime(f"{first_date} {time_str}", "%B %d, %Y %I:%M %p")
             iso = dt.isoformat()
         except ValueError:
             try:
-                iso = datetime.strptime(date_only, "%B %d, %Y").date().isoformat()
+                iso = datetime.strptime(first_date, "%B %d, %Y").date().isoformat()
             except ValueError:
                 iso = None
 
-        # summary paragraph
+        # summary (first <p> after the list)
         p = ul.find_next_sibling("p")
         summary = p.get_text(strip=True) if p else ""
 
-        # view-event link
-        link_tag = ul.find_next_sibling("a", string=lambda s: s and "View Event" in s)
+        # event URL
+        link_tag = block.find("a", string=lambda s: s and "View Event" in s)
         url = link_tag["href"] if link_tag and link_tag.has_attr("href") else None
         if url and url.startswith("/"):
             url = BASE + url
 
-        # flyer image after that link (or after p)
-        img_tag = link_tag.find_next("img") if link_tag else (p.find_next("img") if p else None)
+        # event image from the preceding figure
+        fig = block.find_previous_sibling(
+            lambda tag: tag.name=="figure" and "card__image" in tag.get("class",[])
+        ) or block.select_one("figure.card__image")
+        img_tag = fig.find("img") if fig else None
         img_url = img_tag.get("src") if img_tag and img_tag.has_attr("src") else None
 
         events.append({
@@ -125,13 +130,12 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
         label = item.get('mission') or item.get('title')
         ET.SubElement(it, 'title').text       = f"{kind}: {label}"
         ET.SubElement(it, 'link').text        = item.get('url') or ""
-        # build description
+        # description
         if kind == "Launch":
             desc = f"Status: {item.get('status','')}"
             if item.get('description'):
                 desc += "\n" + item['description']
         else:
-            # events: just summary
             desc = item.get('description','')
         ET.SubElement(it, 'description').text = desc.strip()
         if item.get('datetime'):
@@ -155,5 +159,4 @@ if __name__ == "__main__":
     launches = scrape_launches()
     events   = scrape_events()
     create_rss(launches, events)
-
 
