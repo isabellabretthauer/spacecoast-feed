@@ -1,165 +1,119 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta http-equiv="refresh" content="3600"> <!-- auto-reload every hour -->
+  <meta http-equiv="refresh" content="3600"/>
   <title>Launches &amp; Events</title>
   <style>
-    body { font-family:sans-serif; margin:0; padding:0; background:#f5f5f5; color:#333 }
-    header {
-      display:flex; align-items:center; justify-content:center;
-      background:#004080; color:white; padding:1rem; gap:1rem;
-    }
-    header img { width:230px; height:66px; object-fit:contain; }
-    h1 { margin:0; font-size:1.5rem; }
-
-    main { max-width:960px; margin:1rem auto; padding:0 1rem }
-    section + section { margin-top:2rem }
-    h2 {
-      border-bottom:2px solid #004080; padding-bottom:.5rem;
-      margin-bottom:1rem;
-    }
-    .banner {
-      width:100%; margin-bottom:1.5rem; border-radius:8px;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    }
-    .cards {
-      display:flex; flex-wrap:wrap; gap:1rem;
-    }
-    .card {
-      background:white; border-radius:8px; overflow:hidden;
-      box-shadow:0 2px 6px rgba(0,0,0,0.1);
-      flex:1 1 calc(50% - 1rem); box-sizing:border-box;
-    }
-    .card img.thumb {
-      width:100%; height:auto; display:block;
-    }
-    .card-content { padding:1rem }
-    .card h3 { margin:0 0 .5rem; font-size:1.1rem }
-    .card a { color:#004080; text-decoration:none }
-    .card a:hover { text-decoration:underline }
-    .status {
-      font-weight:bold; margin-bottom:.5rem; color:#555;
-    }
-    .summary { font-size:.95rem; color:#333; margin-bottom:.5rem; }
-    .date { font-size:.9rem; color:#666; margin-top:.5rem; }
-    .qr {
-      display:block;
-      width:150px;
-      height:150px;
-      margin:0.5rem auto;
-    }
-    @media(max-width:600px) { .card { flex:1 1 100% } }
+    body{font-family:sans-serif;margin:0;padding:0;background:#f5f5f5;color:#333}
+    header{display:flex;align-items:center;justify-content:center;background:#004080;color:#fff;padding:1rem;gap:1rem}
+    header img{width:230px;height:66px;object-fit:contain}
+    h1{margin:0;font-size:1.5rem}
+    main{max-width:960px;margin:1rem auto;padding:0 1rem}
+    section+section{margin-top:2rem}
+    h2{border-bottom:2px solid #004080;padding-bottom:.5rem;margin-bottom:1rem}
+    .cards{display:flex;flex-wrap:wrap;gap:1rem}
+    .card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.1);flex:1 1 calc(50% - 1rem);box-sizing:border-box}
+    .thumb{width:100%;display:block}
+    .card-content{padding:1rem}
+    .card-content h3{margin:0 0 .5rem;font-size:1.1rem}
+    .card-content a{color:#004080;text-decoration:none}
+    .card-content a:hover{text-decoration:underline}
+    .status{font-weight:bold;margin-bottom:.5rem;color:#555}
+    .summary{font-size:.95rem;color:#333;margin-bottom:.5rem}
+    .date{font-size:.9rem;color:#666;margin-top:.5rem}
+    .qr{display:block;width:150px;height:150px;margin:.5rem auto}
+    @media(max-width:600px){.card{flex:1 1 100%}}
   </style>
 </head>
 <body>
   <header>
-    <img
-      src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
-      alt="Visit Space Coast Logo"
-    />
+    <img src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png" alt="Space Coast"/>
     <h1>Launches &amp; Events</h1>
   </header>
-
- <main>
+  <main>
     <section>
       <h2>Upcoming Launches</h2>
-      <!-- banner… -->
+      <img class="banner" src="https://www.visitspacecoast.com/wp-content/uploads/2025/06/CRS21-wide-scaled.jpg" alt="CRS-21"/>
       <div id="launches" class="cards"></div>
     </section>
-
     <section>
       <h2>Upcoming Events</h2>
       <div id="events" class="cards"></div>
     </section>
   </main>
-
-  <!-- app QR at bottom -->
-  <div id="app-qr" style="text-align:center; margin:2rem 0;">
+  <div id="app-qr" style="text-align:center;margin:2rem 0">
     <p>Download the official Space Coast Launches app:</p>
     <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fapps.apple.com%2Fus%2Fapp%2Fspace-coast-launches%2Fid123456789"
-         alt="QR for Space Coast Launches app">
+         alt="App QR"/>
   </div>
-
   <script>
-    function firstNSentences(text,n=3){
-      const parts = text.split(/(?<=[.?!])\s+/);
-      return parts.slice(0,n).join(" ") + (parts.length>n?"…":"");
+    function firstNSentences(t,n=3){
+      const p=t.split(/(?<=[.?!])\s+/);
+      return p.slice(0,n).join(" ") + (p.length>n?"…":"");
     }
-
     async function loadFeed(){
-      const resp = await fetch('spacecoast_feed.xml');
-      const xml = new DOMParser().parseFromString(await resp.text(),'application/xml');
-      const items = Array.from(xml.querySelectorAll('item'));
-      const launchesEl = document.getElementById('launches');
-      const eventsEl   = document.getElementById('events');
-
-      items.forEach(item=>{
-        const title = item.querySelector('title').textContent;
-        const link  = item.querySelector('link').textContent;
-        const raw   = item.querySelector('description')?.textContent||"";
-        const date  = item.querySelector('pubDate').textContent;
-        const enc   = item.querySelector('enclosure');
-        const img   = enc?.getAttribute('url')||null;
-        const isL   = title.startsWith('Launch:');
-
-        const card = document.createElement('div'); card.className='card';
-        if(img){
-          const t = document.createElement('img');
-          t.className='thumb'; t.src=img; card.appendChild(t);
+      const res=await fetch("spacecoast_feed.xml");
+      const xml=new DOMParser().parseFromString(await res.text(),"application/xml");
+      const items=[...xml.querySelectorAll("item")];
+      const L=document.getElementById("launches"),E=document.getElementById("events");
+      items.forEach(i=>{
+        const ti=i.querySelector("title").textContent,
+              lk=i.querySelector("link").textContent,
+              ds=i.querySelector("description").textContent||"",
+              pd=i.querySelector("pubDate").textContent,
+              enc=i.querySelector("enclosure"),
+              im=enc?enc.getAttribute("url"):null,
+              isL=ti.startsWith("Launch:");
+        const c=document.createElement("div");c.className="card";
+        if(im){
+          const img=document.createElement("img");
+          img.className="thumb";img.src=im;c.appendChild(img);
         }
-        const c = document.createElement('div'); c.className='card-content';
-        const h3= document.createElement('h3');
-        const a = document.createElement('a');
-        a.href=link; a.target='_blank'; a.textContent = title.replace(/^(Launch|Event):\s*/,'');
-        h3.appendChild(a); c.appendChild(h3);
-
+        const cc=document.createElement("div");cc.className="card-content";
+        const h3=document.createElement("h3"),a=document.createElement("a");
+        a.href=lk;a.target="_blank";a.textContent=ti.replace(/^(Launch|Event):\s*/,"");
+        h3.appendChild(a);cc.appendChild(h3);
         if(isL){
-          const [st, ...rest] = raw.split('\n');
+          const [st, ...rest]=ds.split("\n");
           if(st){
-            const sdom = document.createElement('div');
-            sdom.className='status'; sdom.textContent = st; c.appendChild(sdom);
+            const d=document.createElement("div");
+            d.className="status";d.textContent=st;cc.appendChild(d);
           }
-          const desc = rest.join('\n').trim();
-          if(desc){
-            const ddom = document.createElement('div');
-            ddom.className='summary'; ddom.textContent=desc; c.appendChild(ddom);
+          const r=rest.join("\n").trim();
+          if(r){
+            const s=document.createElement("div");
+            s.className="summary";s.textContent=r;cc.appendChild(s);
           }
         } else {
-          const snippet = firstNSentences(raw,3);
-          if(snippet){
-            const sdom = document.createElement('div');
-            sdom.className='summary'; sdom.textContent=snippet; c.appendChild(sdom);
+          const sn=firstNSentences(ds,3);
+          if(sn){
+            const s=document.createElement("div");
+            s.className="summary";s.textContent=sn;cc.appendChild(s);
           }
-          const qr = document.createElement('img');
-          qr.className='qr';
-          qr.src = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='+encodeURIComponent(link);
-          c.appendChild(qr);
+          const qr=document.createElement("img");
+          qr.className="qr";
+          qr.src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data="+encodeURIComponent(lk);
+          cc.appendChild(qr);
         }
-
-        const ddom = document.createElement('div');
-        ddom.className='date';
-        ddom.textContent = new Date(date).toLocaleString();
-        c.appendChild(ddom);
-
-        card.appendChild(c);
-        (isL?launchesEl:eventsEl).appendChild(card);
+        const dt=document.createElement("div");
+        dt.className="date";dt.textContent=new Date(pd).toLocaleString();
+        cc.appendChild(dt);
+        c.appendChild(cc);
+        (isL?L:E).appendChild(c);
       });
-
-      // “more launches” QR
-      const more = document.createElement('div');
-      more.className='card';
-      more.innerHTML=`
-        <div class="card-content" style="text-align:center;">
-          <p>For more launch details, scan below:</p>
-          <img class="qr"
-               src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(BASE+'/launches/')}"
-               alt="Scan for more launches">
-        </div>`;
-      launchesEl.appendChild(more);
+      // more launches QR
+      const m=document.createElement("div");m.className="card";
+      m.innerHTML=`<div class="card-content" style="text-align:center">
+        <p>For more launch details, scan below:</p>
+        <img class="qr"
+             src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(BASE+"/launches/")}"
+             alt="More launches"></div>`;
+      L.appendChild(m);
     }
-
-    document.addEventListener('DOMContentLoaded', loadFeed);
+    document.addEventListener("DOMContentLoaded",loadFeed);
   </script>
 </body>
 </html>
+
