@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -12,12 +13,11 @@ def scrape_launches():
 
     seen = set()
     launches = []
-    for card in soup.select("div.card__content"):
-        h6s = card.select("h6")
+    for block in soup.select("div.card__content"):
+        # must have two <h6> for date/time
+        h6s = block.select("h6")
         if len(h6s) < 2:
             continue
-
-        # parse date/time
         date_str, time_str = h6s[0].get_text(strip=True), h6s[1].get_text(strip=True)
         try:
             dt = datetime.strptime(f"{date_str} {time_str}", "%B %d, %Y %I:%M %p")
@@ -25,15 +25,14 @@ def scrape_launches():
             continue
         iso = dt.isoformat()
 
-        mission = card.select_one("p strong").get_text(strip=True)
-        status_line = card.select_one("span.card-launches__status").get_text(strip=True)
+        mission = block.select_one("p strong").get_text(strip=True)
+        status_line = block.select_one("span.card-launches__status").get_text(strip=True)
         status = status_line.split(":",1)[1].strip() if ":" in status_line else status_line
+        ps = block.select("p")
+        description = ps[1].get_text(strip=True) if len(ps) > 1 else ""
 
-        desc_ps = card.select("p")
-        description = desc_ps[1].get_text(strip=True) if len(desc_ps) > 1 else ""
-
-        # image is in the sibling <figure class="card__image">
-        fig = card.parent.select_one("figure.card__image")
+        # grab launch image
+        fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
         img_tag = fig.find("img") if fig else None
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
@@ -58,52 +57,40 @@ def scrape_events():
     soup = BeautifulSoup(resp.text, "html.parser")
 
     events = []
-    for card in soup.select("div.card__content"):
-        # skip anything that looks like a launch (two <h6>)
-        if len(card.select("h6")) >= 2:
+    for block in soup.select("div.card__content"):
+        # skip launch cards
+        if len(block.select("h6")) >= 2:
             continue
 
         # title
-        h4 = card.find("h4")
-        if not h4:
+        title_tag = block.find("h4")
+        if not title_tag:
             continue
-        title = h4.get_text(strip=True)
+        title = title_tag.get_text(strip=True)
 
-        # date & time from the <ul>
-        ul = h4.find_next_sibling("ul")
-        date_text = time_text = ""
-        if ul:
-            lis = ul.find_all("li")
-            if lis:
-                date_text = lis[0].get_text(strip=True)
-            if len(lis) > 1:
-                time_text = lis[1].get_text(strip=True).replace("Time start:", "").strip()
-
-        # build ISO datetime
+        # date & time
+        ul = title_tag.find_next_sibling("ul")
+        lis = ul.find_all("li") if ul else []
+        raw_date = lis[0].get_text(strip=True) if lis else ""
+        first_date = raw_date.split("–")[0].split("-")[0].strip()
+        time_str = lis[1].get_text(strip=True).replace("Time start:", "").strip() if len(lis) > 1 else ""
         try:
-            dt = datetime.strptime(f"{date_text} {time_text}", "%B %d, %Y %I:%M %p")
+            dt = datetime.strptime(f"{first_date} {time_str}", "%B %d, %Y %I:%M %p")
             iso = dt.isoformat()
-        except Exception:
-            try:
-                iso = datetime.strptime(date_text, "%B %d, %Y").date().isoformat()
-            except Exception:
-                iso = ""
+        except ValueError:
+            iso = datetime.strptime(first_date, "%B %d, %Y").date().isoformat()
 
-        # summary = first <p> that isn’t the title or “View Event”
-        summary = ""
-        for p in card.find_all("p"):
-            txt = p.get_text(strip=True)
-            if not txt or txt == title or "View Event" in txt:
-                continue
-            summary = txt
-            break
+        # summary = first <p> under this block
+        desc_el = block.find("p")
+        summary = desc_el.get_text(strip=True) if desc_el else ""
 
-        # URL = the “View Event” link
-        a = card.find("a", string=lambda s: s and "View Event" in s)
-        url = a["href"] if a and a.has_attr("href") else ""
+        # event URL
+        link_tag = title_tag.find_next("a", string=lambda s: s and "View Event" in s)
+        url = link_tag["href"] if link_tag and link_tag.has_attr("href") else ""
 
-        # image = first flyer thumbnail
-        img_tag = card.find("img", class_="wp-post-image")
+        # event image
+        fig = block.find_previous_sibling("figure", class_="card__image") or block.select_one("figure.card__image")
+        img_tag = fig.find("img") if fig else None
         img_url = img_tag.get("data-lazy-src") or img_tag.get("src") if img_tag else None
 
         events.append({
@@ -118,9 +105,9 @@ def scrape_events():
 def create_rss(launches, events, filename="spacecoast_feed.xml"):
     rss     = ET.Element('rss', version='2.0')
     channel = ET.SubElement(rss, 'channel')
-    ET.SubElement(channel, 'title').text       = 'Visit Space Coast Launches & Events'
-    ET.SubElement(channel, 'link').text        = 'https://www.visitspacecoast.com/'
-    ET.SubElement(channel, 'description').text = 'Automated feed of Space Coast launches and events'
+    ET.SubElement(channel, 'title').text         = 'Visit Space Coast Launches & Events'
+    ET.SubElement(channel, 'link').text          = 'https://www.visitspacecoast.com/'
+    ET.SubElement(channel, 'description').text   = 'Automated feed of Space Coast launches and events'
     ET.SubElement(channel, 'lastBuildDate').text = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
 
     def add_item(item, kind):
@@ -128,10 +115,9 @@ def create_rss(launches, events, filename="spacecoast_feed.xml"):
         ET.SubElement(it, 'title').text       = f"{kind}: {item.get('mission', item.get('title'))}"
         ET.SubElement(it, 'link').text        = item.get('url') or ''
         ET.SubElement(it, 'description').text = item.get('description','')
-        pub = item.get('datetime') or ""
-        ET.SubElement(it, 'pubDate').text     = datetime.fromisoformat(pub).strftime('%a, %d %b %Y %H:%M:%S GMT') if pub else ""
-        GUID = item.get('mission') or item.get('title')
-        ET.SubElement(it, 'guid').text        = f"{kind.lower()}-{GUID}-{item['datetime']}"
+        ET.SubElement(it, 'pubDate').text     = datetime.fromisoformat(item['datetime']).strftime('%a, %d %b %Y %H:%M:%S GMT')
+        guid_txt = item.get('mission') or item.get('title')
+        ET.SubElement(it, 'guid').text        = f"{kind.lower()}-{guid_txt}-{item['datetime']}"
         if item.get('image'):
             ET.SubElement(it, 'enclosure', url=item['image'], type='image/jpeg')
 

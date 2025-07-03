@@ -28,10 +28,8 @@
 </head>
 <body>
   <header>
-    <img
-      src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
-      alt="Visit Space Coast Logo"
-    />
+    <img src="https://www.visitspacecoast.com/wp-content/themes/visitspacecoast-com/resources/images/logo.png"
+         alt="Visit Space Coast Logo"/>
     <h1>Launches &amp; Events</h1>
   </header>
 
@@ -65,8 +63,8 @@
 
   <script>
     async function loadFeed() {
-      const res   = await fetch('spacecoast_feed.xml');
-      const xml   = new DOMParser().parseFromString(await res.text(), 'application/xml');
+      const res = await fetch('spacecoast_feed.xml');
+      const xml = new DOMParser().parseFromString(await res.text(), 'application/xml');
       const items = [...xml.querySelectorAll('item')];
       const launchesEl = document.getElementById('launches');
       const eventsEl   = document.getElementById('events');
@@ -112,7 +110,7 @@
         dt.textContent = new Date(dateText).toLocaleString();
         c.appendChild(dt);
 
-        // QR code for each event
+        // only events get a QR
         if (/^Event:/.test(title)) {
           const qr = document.createElement('img');
           qr.className = 'qr';
@@ -128,17 +126,17 @@
         else                              eventsEl.appendChild(card);
       });
 
-      // “More launches” QR
-      const scan = document.createElement('div');
-      scan.className = 'card';
-      scan.innerHTML = `
+      // one final “more launches” QR card
+      const more = document.createElement('div');
+      more.className = 'card';
+      more.innerHTML = `
         <div class="card-content" style="text-align:center">
           <p>For more launch details, scan below:</p>
           <img class="qr"
                src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent('https://www.visitspacecoast.com/launches/')}"
-               alt="More launches QR">
+               alt="More launches">
         </div>`;
-      launchesEl.appendChild(scan);
+      launchesEl.appendChild(more);
     }
 
     document.addEventListener('DOMContentLoaded', loadFeed);
